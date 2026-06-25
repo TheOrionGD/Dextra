@@ -1,0 +1,10 @@
+{
+  "camera_index": 0,
+  "cursor_smoothing": 5,
+  "click_threshold_px": 30,
+  "drag_hold_time_sec": 0.6,
+  "double_click_time_sec": 0.35,
+  "cooldown_period_sec": 0.3,
+  "voice_commands_enabled": true,
+  "gesture_trainer_enabled": true
+}

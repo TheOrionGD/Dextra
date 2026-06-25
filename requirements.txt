@@ -1,0 +1,15 @@
+mediapipe>=0.10.0
+opencv-python>=4.8.0
+pyautogui>=0.9.54
+numpy>=1.24.0
+fastapi>=0.111.0
+uvicorn>=0.29.0
+rich>=13.0.0
+pydantic>=2.0.0
+
+# Deep Learning & Audio Mappings for Voice Engine
+transformers>=4.35.0
+torch>=2.1.0
+sounddevice>=0.4.6
+soundfile>=0.12.1
+librosa>=0.10.0

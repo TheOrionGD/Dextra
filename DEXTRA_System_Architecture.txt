@@ -1,0 +1,165 @@
+========================================================================
+                      DEXTRA PROJECT TEAM DETAILS
+========================================================================
+
+Technology Stack
+----------------
+- Frontend: React 18+ (scaffolded via Vite CLI)
+- Backend: FastAPI, uvicorn
+- Computer Vision: OpenCV, MediaPipe
+- Audio Processing: Hugging Face Transformers, sounddevice, soundfile
+- Mouse Control & OS Integration: PyAutoGUI, NumPy
+
+========================================================================
+TEAM MEMBER ASSIGNMENTS & RESPONSIBILITIES
+========================================================================
+
+1. SALMAN - Core Gesture & Tracking Engine
+------------------------------------------
+- Assigned Modules:
+  * `python/camera.py`: Frame capture and camera configs.
+  * `python/gesture_engine.py`: MediaPipe hands tracking.
+  * `python/gesture_mapping.py`: Mouse event maps and smoothing coordinates.
+- Key Responsibilities:
+  * Implement video capture loops and camera frame extraction.
+  * Initialize MediaPipe Hands to isolate 21 landmarks at >=30 FPS.
+  * Develop smoothing moving average coordinates and mapping coordinates to screen dimensions.
+  * Trigger click, scroll, double-click, and drag-and-drop operations via PyAutoGUI.
+- Models & APIs:
+  * Google MediaPipe Hands framework
+  * OpenCV VideoCapture API
+  * PyAutoGUI execution library
+  * NumPy mathematical arrays
+- Helper & Sample Test Cases to Pass:
+  * Capture loop runs without lag or frame drops.
+  * Coordinate translation maps index finger tip position to screen coordinates.
+  * Gesture state freeze ("Open Palm") suspends input activity.
+
+2. LOGESH - Voice Command Engine
+--------------------------------
+- Assigned Modules:
+  * `python/voice_wakeword.py`: Listens for custom trigger word "DEXTRA".
+  * `python/voice_engine.py`: Runs Hugging Face transcription.
+  * `python/voice_mapping.py`: Maps transcription strings to hotkeys.
+- Key Responsibilities:
+  * Set up background audio streaming using sounddevice.
+  * Build a wakeword classifier checking incoming sound blocks for "DEXTRA".
+  * Integrate Hugging Face transformers pipeline (e.g. Whisper) to convert audio buffers to text.
+  * Match transcribed queries to 40+ system hotkeys.
+- Models & APIs:
+  * Hugging Face Transformers ASR Pipeline (e.g., openai/whisper-tiny)
+  * PyTorch framework
+  * Sounddevice and Soundfile audio drivers
+  * PyAutoGUI hotkey commands
+- Helper & Sample Test Cases to Pass:
+  * Wakeword trigger is detected in background streams.
+  * Speech-to-text transcribes speech blocks in under 500ms.
+  * Transcribed text commands match targeting PyAutoGUI key hotkeys.
+
+3. MUTHAMIL - FastAPI Backend GUI Server
+-----------------------------------------
+- Assigned Modules:
+  * `python/config.py`: Local configurations read/write layers.
+  * `python/gui_server.py`: FastAPI REST and WebSockets.
+  * `python/main.py`: Launcher CLI system.
+- Key Responsibilities:
+  * Handle read/write lock synchronization on config parameters files.
+  * Expose REST routes for saving configuration settings.
+  * Stream annotated OpenCV image frames to the frontend WebSockets receiver.
+  * Orchestrate backend thread activations and process states.
+- Models & APIs:
+  * FastAPI REST API router
+  * Uvicorn ASGI server
+  * WebSockets framework
+- Helper & Sample Test Cases to Pass:
+  * Bind and boot uvicorn web server listening on port 8000.
+  * JSON payloads are validated and persisted in dextra_settings.json.
+  * WebSockets connection handles client disconnections.
+
+4. GODFREY - React Settings & Trainer SPA
+------------------------------------------
+- Assigned Module: `gui/` React Project
+- Key Responsibilities:
+  * Implement Vite CLI project structures and UI layouts.
+  * Create component form bindings to settings parameters.
+  * Build WebSocket client connection canvas renderer.
+  * Expose voice activation control switches (`gui/src/components/VoiceController.jsx`).
+- Models & APIs:
+  * React Router v6
+  * Fetch API REST interface
+  * HTML5 WebSocket interface
+- Helper & Sample Test Cases to Pass:
+  * Run Vite server successfully on localhost:5173.
+  * Form inputs serialize config values correctly.
+  * Draw incoming image bytes onto canvas dynamically at 30 FPS.
+
+========================================================================
+Consolidated Structure Architecture
+========================================================================
+Root/
+├── DEXTRA_System_Architecture.txt  (Detailed Tech Stack & Integration Reference)
+├── DEXTRA_Project_Tracker.xlsx     (Trello Board Checklist Spreadsheet)
+├── README.md                       (General Overview)
+├── LICENSE                         (Project License)
+├── dextra_settings.json            (System Configurations)
+├── dextra_custom_gestures.json     (Custom gestures data)
+├── requirements.txt         (Python Dependencies)
+├── python/                  (Modular Python Folder)
+│   ├── main.py              (Launcher CLI)
+│   ├── config.py            (Muthamil - Configuration Manager)
+│   ├── camera.py            (Salman - OpenCV Camera Engine)
+│   ├── gesture_engine.py    (Salman - MediaPipe Hands Engine)
+│   ├── gesture_mapping.py   (Salman - PyAutoGUI Mouse Mapper)
+│   ├── voice_wakeword.py    (Logesh - Custom Wakeword Monitor)
+│   ├── voice_engine.py      (Logesh - Hugging Face STT Engine)
+│   ├── voice_mapping.py     (Logesh - Shortcut Mapper)
+│   └── gui_server.py        (Muthamil - FastAPI API server)
+└── gui/                     (React UI Application SPA)
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── main.jsx
+        ├── App.jsx
+        ├── index.css
+        └── components/
+            └── VoiceController.jsx (Godfrey - Wakeword & transcription status panel)
+
+========================================================================
+                 14-DAY DEVELOPMENT & DEPLOYMENT ROADMAP
+========================================================================
+
+Days 1–2: Project Foundation & Baseline Integration
+- Salman: Finalize `python/camera.py` frame capture baseline checks.
+- Logesh: Setup sounddevice buffers capture in `python/voice_wakeword.py`.
+- Muthamil: Establish config validation logic in `python/config.py`.
+- Godfrey: Connect UI boilerplate framework settings routes to FastAPI endpoints.
+- Milestones: Backend server runs; configurations load; React page loads successfully.
+
+Days 3–5: Visual Tracking & Cursor Mapping (Core Mouse)
+- Salman: Implement MediaPipe hands tracking in `python/gesture_engine.py` and coordinate remapping in `python/gesture_mapping.py`.
+- Muthamil: Deliver annotated JPEG streams via WS in `python/gui_server.py`.
+- Godfrey: Draw video streams onto HTML5 Canvas in real-time.
+- Milestones: Real-time hand detection active; cursor position updates smoothly.
+
+Days 6–8: Hugging Face Speech-to-Text & Wakeword
+- Logesh: Train/adjust "DEXTRA" keyword classifier (`python/voice_wakeword.py`) and load Whisper models pipeline in `python/voice_engine.py`.
+- Godfrey: Wire VoiceController settings to specify custom wakewords.
+- Milestones: Background mic listening detects "DEXTRA" and triggers text transcription.
+
+Days 9–10: Command Mappings & Custom Gestures
+- Logesh: Bind voice transcriptions to PyAutoGUI hotkeys (`python/voice_mapping.py`).
+- Salman: Implement click distance triggers and rest modes.
+- Muthamil: Expose REST endpoints to save custom gestures.
+- Milestones: Speech triggers actions (copy, paste); custom gesture recordings persist.
+
+Days 11–12: Integration, UI Polish & Multi-threading Sync
+- All: Perform integration checks syncing camera streams and voice threads concurrently.
+- Godfrey: Apply cyberpunk glassmorphic CSS designs, custom colors, and sound visualizers.
+- Milestones: Complete system runs concurrently under 30% CPU load; UI looks sleek.
+
+Days 13–14: QA Testing, Performance Tuning & Deployment Packaging
+- All: Debug gesture misfires, latency adjustments, and ambient noise levels.
+- Muthamil: Package Python application and React GUI into a distributed build.
+- Milestones: Zero-install running capabilities verified; deployment package ready.
+

@@ -1,10 +1,73 @@
-# Byte-compiled / optimized / DLL files
+# ==============================================================================
+# DEXTRA PROJECT SPECIFIC GITIGNORE
+# ==============================================================================
+
+# Node / React / Vite Frontend
+gui/node_modules/
+gui/dist/
+gui/dist-ssr/
+gui/.env
+gui/.env.local
+gui/.env.development.local
+gui/.env.test.local
+gui/.env.production.local
+gui/npm-debug.log*
+gui/yarn-debug.log*
+gui/yarn-error.log*
+gui/.vite/
+gui/.oxlintrc.json
+
+# Python Backend
+python/__pycache__/
+python/*.py[cod]
+python/*.pyo
+python/*.pyc
+python/.pytest_cache/
+python/logs/
+
+# Local Environment Configurations
+.env
+.env.local
+
+# Hugging Face & Deep Learning Local Model Cache
+.cache/huggingface/
+.cache/torch/
+huggingface_models/
+huggingface_cache/
+models/whisper/
+models/wav2vec2/
+
+# Generic Python Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
 
 # C extensions
 *.so
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Distribution / packaging
 .Python
