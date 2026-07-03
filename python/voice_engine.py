@@ -1,37 +1,84 @@
-# ==============================================================================
-# DEXTRA PROJECT FILE: python/voice_engine.py
-# ==============================================================================
-# 
-# Developer Assigned: Logesh (Voice Command Engine)
-# 
-# Purpose:
-# --------
-# Runs speech-to-text (ASR) transcription on recorded audio blocks. Uses pre-trained
-# Hugging Face models (e.g. Whisper-tiny or Wav2Vec2) to run local, offline-capable 
-# speech processing.
-# 
-# Libraries / Modules / Models Used:
-# ----------------------------------
-# - `transformers` (ASR Pipeline loading pre-trained models)
-# - `torch` (PyTorch - execution framework backing Hugging Face pipeline)
-# - `sounddevice` (Audio buffer capture for recording speech commands)
-# - `soundfile` (Temporary buffer formatting)
-# 
-# Developer Implementation Guide:
-# -------------------------------
-# 1. Load Hugging Face model (`openai/whisper-tiny` or `facebook/wav2vec2-base-960h`)
-#    into a local pipeline object.
-# 2. Record voice command audio (triggered after wakeword activation) for a configured duration.
-# 3. Feed the audio array directly to the model pipeline to extract the transcribed text string.
-# 
-# Verification & Test Cases to Pass:
-# ----------------------------------
-# - Helper Test Case: Pre-trained model downloads/loads successfully on startup.
-# - Sample Test Case: Transcription runs locally without external network requirements.
-# - Sample Test Case: Audio blocks of 2-3 seconds are transcribed in <500ms latency.
-# 
-# ==============================================================================
+import numpy as np
+import sounddevice as sd
+import torch
+
+from transformers import pipeline
+
+# ----------------------------
+# Configuration
+# ----------------------------
+SAMPLE_RATE = 16000
+RECORD_SECONDS = 3
+MODEL_NAME = "openai/whisper-tiny"
+
+# ----------------------------
+# Load ASR Model
+# ----------------------------
+print("Loading speech recognition model...")
+
+device = 0 if torch.cuda.is_available() else -1
+
+asr = pipeline(
+    task="automatic-speech-recognition",
+    model=MODEL_NAME,
+    device=device,
+)
+
+print("Model loaded successfully.")
+
+# ----------------------------
+# Audio Recording
+# ----------------------------
+def record_audio(duration=RECORD_SECONDS):
+    """
+    Records microphone audio and returns a NumPy array.
+    """
+
+    print("Listening...")
+
+    recording = sd.rec(
+        int(duration * SAMPLE_RATE),
+        samplerate=SAMPLE_RATE,
+        channels=1,
+        dtype="float32",
+    )
+
+    sd.wait()
+
+    print("Recording complete.")
+
+    return recording.flatten()
+
+
+# ----------------------------
+# Speech-to-Text
+# ----------------------------
+def transcribe(audio):
+    """
+    Performs local speech recognition.
+    """
+
+    result = asr(
+        {
+            "sampling_rate": SAMPLE_RATE,
+            "raw": audio,
+        }
+    )
+
+    return result["text"]
+
+
+# ----------------------------
+# Main
+# ----------------------------
+def main():
+    audio = record_audio()
+
+    text = transcribe(audio)
+
+    print("\nRecognized Speech:")
+    print(text)
+
 
 if __name__ == "__main__":
-    print("DEXTRA Hugging Face STT Engine Stub - Developed by Logesh")
-    print("For developer assignment documentation see: TEAM_DETAILS.txt")
+    main()

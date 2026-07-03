@@ -1,36 +1,75 @@
-# ==============================================================================
-# DEXTRA PROJECT FILE: python/voice_wakeword.py
-# ==============================================================================
-# 
-# Developer Assigned: Logesh (Voice Command Engine)
-# 
-# Purpose:
-# --------
-# Listens continuously in the background for the system activation name (e.g.,
-# "DEXTRA" or "DEXTRA activate"). Upon detection, triggers the primary speech
-# transcriber module (`voice_engine.py`) to process subsequent commands.
-# 
-# Libraries / Modules / Models Used:
-# ----------------------------------
-# - `sounddevice` / `soundfile` (Pulls live audio buffer blocks from microphone)
-# - `numpy` (Checks incoming signal amplitude / RMS thresholds)
-# - Pre-trained wakeword model or simple keyword classification
-# 
-# Developer Implementation Guide:
-# -------------------------------
-# 1. Maintain a rolling audio queue checking incoming signal frames.
-# 2. Extract spectral features or use a simple classification threshold to capture
-#    the trigger word ("DEXTRA").
-# 3. Upon detection, notify the FastAPI backend and start the STT pipeline.
-# 
-# Verification & Test Cases to Pass:
-# ----------------------------------
-# - Helper Test Case: Calibrates and checks microphone sensitivity threshold.
-# - Sample Test Case: Detecting the spoken wakeword successfully flips the system status to "ACTIVE".
-# - Sample Test Case: Filters out generic noise cues below trigger word confidence threshold.
-# 
-# ==============================================================================
+import queue
+import threading
+import numpy as np
+import sounddevice as sd
+
+SAMPLE_RATE = 16000
+BLOCK_SIZE = 1024
+THRESHOLD = 0.02
+
+audio_queue = queue.Queue()
+system_active = False
+
+
+def audio_callback(indata, frames, time, status):
+    if status:
+        print(status)
+
+    audio_queue.put(indata.copy())
+
+
+def detect_wakeword(audio):
+    """
+    Placeholder wakeword detector.
+
+    Replace this with:
+    - OpenWakeWord
+    - Porcupine
+    - Whisper keyword classifier
+    - Custom ML model
+    """
+
+    rms = np.sqrt(np.mean(audio ** 2))
+
+    if rms > THRESHOLD:
+        return True
+
+    return False
+
+
+def activate():
+    global system_active
+
+    if system_active:
+        return
+
+    system_active = True
+
+    print("DEXTRA ACTIVE")
+
+    # Example:
+    # requests.post("http://localhost:8000/activate")
+    #
+    # or
+    # subprocess.Popen(["python", "voice_engine.py"])
+
+
+def listen():
+    with sd.InputStream(
+        samplerate=SAMPLE_RATE,
+        channels=1,
+        callback=audio_callback,
+        blocksize=BLOCK_SIZE,
+    ):
+
+        print("Listening for wakeword...")
+
+        while True:
+            block = audio_queue.get()
+
+            if detect_wakeword(block):
+                activate()
+
 
 if __name__ == "__main__":
-    print("DEXTRA Wakeword Classifier Stub - Developed by Logesh")
-    print("For developer assignment documentation see: TEAM_DETAILS.txt")
+    listen()
