@@ -1,3 +1,5 @@
+<center> <img src="./Frontend/public/dextra-icon.png" alt="Dextra" width="350" height="380"/> </center>
+
 # DEXTRA - Control Without Contact
 
 ```
@@ -23,6 +25,9 @@
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-yellow.svg)](https://huggingface.co/docs/transformers/index)
 
 ---
+
+
+
 
 ## Developer Story
 

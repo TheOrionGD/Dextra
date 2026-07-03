@@ -3,19 +3,19 @@
 # ==============================================================================
 
 # Node / React / Vite Frontend
-gui/node_modules/
-gui/dist/
-gui/dist-ssr/
-gui/.env
-gui/.env.local
-gui/.env.development.local
-gui/.env.test.local
-gui/.env.production.local
-gui/npm-debug.log*
-gui/yarn-debug.log*
-gui/yarn-error.log*
-gui/.vite/
-gui/.oxlintrc.json
+Frontend/node_modules/
+Frontend/dist/
+Frontend/dist-ssr/
+Frontend/.env
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.test.local
+Frontend/.env.production.local
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+Frontend/.vite/
+Frontend/.oxlintrc.json
 
 # Python Backend
 python/__pycache__/
