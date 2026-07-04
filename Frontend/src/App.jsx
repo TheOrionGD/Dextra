@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import CommandPalette from './components/CommandPalette';
 import Landing from './components/Landing';
 import Dashboard from './components/Dashboard';
@@ -65,6 +65,7 @@ const AppShell = ({ showToast, children }) => (
 
 /* Floating hotkey indicator badge */
 const HotkeyBadge = () => {
+  const location = useLocation();
   const [hasUsed, setHasUsed] = useState(() => {
     return localStorage.getItem('dextra_has_used_palette') === 'true';
   });
@@ -83,7 +84,8 @@ const HotkeyBadge = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [hasUsed]);
 
-  if (hasUsed) return null;
+  // Hide the global hotkey badge on the marketing landing page to avoid HUD overlay overlap
+  if (hasUsed || location.pathname === '/') return null;
 
   return (
     <div className="global-hotkey-badge" aria-hidden="true" title="Press Ctrl+K for commands">

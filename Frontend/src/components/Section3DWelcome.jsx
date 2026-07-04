@@ -291,7 +291,7 @@ export default function Section3DWelcome({
 
       if (modelRef.current) {
         const intersects = raycaster.intersectObject(proxyMesh);
-        if (intersects.length > 0 || e.target === canvas) {
+        if (intersects.length > 0) {
           e.preventDefault();
         }
       }
@@ -306,7 +306,7 @@ export default function Section3DWelcome({
 
       if (modelRef.current) {
         const intersects = raycaster.intersectObject(proxyMesh);
-        if (intersects.length > 0 || e.target === canvas) {
+        if (intersects.length > 0) {
           e.preventDefault();
           const zoomSpeed = 0.0015;
           userScaleMultiplier -= e.deltaY * zoomSpeed;
