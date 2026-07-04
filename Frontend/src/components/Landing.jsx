@@ -391,7 +391,7 @@ export default function Landing() {
 
       {/* 3D Asset Overlay (Desktop only, fixed across entire landing page/system) */}
       {!isMobile && (
-        <div className="fixed inset-0 w-full h-full pointer-events-none z-[8]">
+        <div className="fixed inset-0 w-full h-full pointer-events-none z-[20]">
           <Section3DWelcome 
             smoothProgress={smoothProgress}
             onLoadProgress={setModelProgress}
@@ -410,7 +410,7 @@ export default function Landing() {
           {!isMobile ? (
             <canvas 
               ref={canvasRef} 
-              className="absolute inset-0 w-full h-full object-cover z-0" 
+              className="absolute inset-0 w-full h-full object-cover z-10" 
             />
           ) : (
             /* Mobile Fallback: Elegant visual rendering instead of image sequence */
@@ -537,7 +537,7 @@ export default function Landing() {
           {/* ──────────────────────────────────────────────────────── */}
           <motion.div 
             style={{ opacity: s2Opacity, y: s2Y }}
-            className="absolute inset-y-0 left-0 w-full md:w-[55vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-20"
+            className="absolute inset-y-0 left-0 w-full md:w-[55vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-30"
           >
             <div className="max-w-2xl flex flex-col items-start">
               <span className="text-xs font-bold text-[#5A9ED6] uppercase tracking-widest bg-[#BFDDF0]/45 px-3.5 py-1.5 rounded-full mb-4 inline-block">
@@ -580,15 +580,16 @@ export default function Landing() {
           {/* ──────────────────────────────────────────────────────── */}
           <motion.div 
             style={{ opacity: s3Opacity, y: s3Y }}
-            className="absolute inset-y-0 left-0 w-full md:w-[55vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-20"
+            className="absolute inset-y-0 left-0 w-full md:w-[55vw] flex flex-col justify-center text-left pl-6 md:pl-24 lg:pl-32 pr-6 z-30"
           >
-            <div className="max-w-2xl flex flex-col items-start">
-              <span className="text-xs font-bold text-[#5A9ED6] uppercase tracking-widest bg-[#BFDDF0]/40 px-3.5 py-1.5 rounded-full mb-5 inline-block">
+            {/* Glassmorphic Container Card */}
+            <div className="max-w-2xl flex flex-col items-start p-8 md:p-10 rounded-[32px] bg-white/35 backdrop-blur-xl border border-white/40 shadow-2xl shadow-slate-900/5 hover:bg-white/45 transition-all duration-500">
+              <span className="text-xs font-bold text-[#5A9ED6] uppercase tracking-widest bg-[#BFDDF0]/60 px-3.5 py-1.5 rounded-full mb-5 inline-block border border-white/20">
                 Scrollytelling Engine
               </span>
               
               {/* Staggered Word Reveal Heading */}
-              <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-slate-800 font-heading mb-8">
+              <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-slate-800 font-heading mb-6">
                 {["Scroll", "Through", "Intelligence"].map((word, i) => (
                   <motion.span 
                     key={i} 
@@ -602,7 +603,7 @@ export default function Landing() {
                 ))}
               </h2>
 
-              <p className="text-base text-slate-600 leading-relaxed drop-shadow-sm select-none">
+              <p className="text-base text-slate-600 leading-relaxed select-none">
                 Every frame reveals a deeper layer of intelligence—vision, reasoning, orchestration, and seamless execution. The gesture video adapts directly to the speed of your fingers.
               </p>
             </div>
@@ -613,7 +614,7 @@ export default function Landing() {
           {/* ──────────────────────────────────────────────────────── */}
           <motion.div 
             style={{ opacity: s4Opacity, y: s4Y }}
-            className="absolute inset-y-0 left-0 w-full md:w-[65vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-20"
+            className="absolute inset-y-0 left-0 w-full md:w-[65vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-30"
           >
             <div className="max-w-3xl">
               <span className="text-xs font-bold text-[#5A9ED6] uppercase tracking-widest bg-[#BFDDF0]/40 px-3.5 py-1.5 rounded-full mb-4 inline-block">
@@ -693,7 +694,7 @@ export default function Landing() {
           {/* ──────────────────────────────────────────────────────── */}
           <motion.div 
             style={{ opacity: s5Opacity, y: s5Y, scale: s5Scale }}
-            className="absolute inset-y-0 left-0 w-full md:w-[50vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-20"
+            className="absolute inset-y-0 left-0 w-full md:w-[50vw] flex flex-col justify-center text-left pl-12 md:pl-24 lg:pl-32 pr-6 z-30"
           >
             <div className="max-w-2xl flex flex-col items-start">
               <span className="text-xs font-bold text-[#5A9ED6] uppercase tracking-widest bg-[#BFDDF0]/40 px-3.5 py-1.5 rounded-full mb-5 inline-block">
