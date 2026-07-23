@@ -23,6 +23,18 @@
 [![FastAPI Version](https://img.shields.io/badge/FastAPI-0.111%2B-teal)](https://fastapi.tiangolo.com/)
 [![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10.0%2B-blue.svg)](https://github.com/google/mediapipe)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Transformers-yellow.svg)](https://huggingface.co/docs/transformers/index)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg)](https://opencv.org/)
+[![PyAutoGUI](https://img.shields.io/badge/PyAutoGUI-0.9%2B-yellow.svg)](https://pyautogui.readthedocs.io/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/TheOrionGD/Dextra/pulls)
+[![Build Status](https://img.shields.io/badge/Build-Passing-success.svg)](#)
+
+<!-- Developers & Contributors Badges -->
+[![Contributors](https://img.shields.io/github/contributors/TheOrionGD/Dextra?color=brightgreen&style=flat-square)](https://github.com/TheOrionGD/Dextra/graphs/contributors)
+[![Ideator - Harihar R](https://img.shields.io/badge/Ideator-Harihar%20R-gold?style=flat-square&logo=github)](https://github.com/HARIHAR1406)
+[![Lead - Godfrey T R](https://img.shields.io/badge/Developer-Godfrey%20T%20R-blue?style=flat-square&logo=github)](https://github.com/TheOrionGD)
+[![Core - Mohamed Salman P](https://img.shields.io/badge/Collaborator-Mohamed%20Salman%20P-green?style=flat-square&logo=github)](https://github.com/Salman4256)
+[![Voice - Logesh M](https://img.shields.io/badge/Collaborator-Logesh%20M-orange?style=flat-square&logo=github)](https://github.com/logeshM1)
+[![Backend - Muthamil V](https://img.shields.io/badge/Collaborator-Muthamil%20V-purple?style=flat-square&logo=github)](https://github.com/muthamil13)
 
 ---
 
@@ -78,10 +90,11 @@ DEXTRA addresses all five scenarios simultaneously by providing a hygienic, natu
 
 | Team Member | Role / Focus Area | Assigned Modules | Key Responsibilities |
 | :--- | :--- | :--- | :--- |
-| **Salman** | Core Gesture & Tracking Engine | `python/camera.py`<br>`python/gesture_engine.py`<br>`python/gesture_mapping.py` | Video capture, MediaPipe 21 landmark detection, smoothing filter, PyAutoGUI mouse event binding. |
-| **Logesh** | Voice Command Engine | `python/voice_wakeword.py`<br>`python/voice_engine.py`<br>`python/voice_mapping.py` | Background audio capture, "DEXTRA" wakeword monitor, Hugging Face Whisper ASR transcription, shortcut mapper. |
-| **Muthamil** | FastAPI Backend GUI Server | `python/config.py`<br>`python/gui_server.py`<br>`python/main.py` | File lock thread safety on config JSONs, FastAPI REST & WebSockets JPEG stream, system CLI launcher menu. |
-| **Godfrey** | React Settings & Trainer SPA | `Frontend/` React Application | Vite React SPA layout, WebSocket HTML5 Canvas video feed renderer, voice controller status component, form bindings. |
+| **Harihar R** (@HARIHAR1406) | System Ideator | System Concept & Architecture | Conceived initial vision and conceptual design for gesture-driven touchless computing. |
+| **Mohamed Salman P** (@Salman4256) | Core Gesture & Tracking Engine (Collaborator) | `python/camera.py`<br>`python/gesture_engine.py`<br>`python/gesture_mapping.py` | Video capture, MediaPipe 21 landmark detection, smoothing filter, PyAutoGUI mouse event binding. |
+| **Logesh M** (@logeshM1) | Voice Command Engine (Collaborator) | `python/voice_wakeword.py`<br>`python/voice_engine.py`<br>`python/voice_mapping.py` | Background audio capture, "DEXTRA" wakeword monitor, Hugging Face Whisper ASR transcription, shortcut mapper. |
+| **Muthamil V** (@muthamil13) | FastAPI Backend GUI Server (Collaborator) | `python/config.py`<br>`python/gui_server.py`<br>`python/main.py` | File lock thread safety on config JSONs, FastAPI REST & WebSockets JPEG stream, system CLI launcher menu. |
+| **Godfrey T R** (@TheOrionGD) | React Settings & Trainer SPA (Lead) | `Frontend/` React Application | Vite React SPA layout, WebSocket HTML5 Canvas video feed renderer, voice controller status component, form bindings. |
 
 ---
 
@@ -415,10 +428,11 @@ npm test
 ## Contributors & Licensing
 
 ### Project Contributors
-- **Salman** — Core Gesture & Tracking Engine
-- **Logesh** — Voice Command Engine
-- **Muthamil** — FastAPI Backend & Launch Systems
-- **Godfrey** — React Settings & Trainer SPA
+- **Harihar R** (`@HARIHAR1406`) — System Ideator
+- **Mohamed Salman P** (`@Salman4256`) — Core Gesture & Tracking Engine (Collaborator)
+- **Logesh M** (`@logeshM1`) — Voice Command Engine (Collaborator)
+- **Muthamil V** (`@muthamil13`) — FastAPI Backend & Launch Systems (Collaborator)
+- **Godfrey T R** (`@TheOrionGD`) — Lead Developer & React Settings SPA
 
 ### License
 DEXTRA is open-source software released under the terms of the [MIT License](file:///o:/PROJECTS/Dextra/LICENSE).
