@@ -1,40 +1,79 @@
-# ==============================================================================
-# DEXTRA PROJECT FILE: python/gesture_mouse.py
-# ==============================================================================
-# 
-# Developer Assigned: Salman (Core Gesture & Tracking Engine)
-# 
-# Purpose:
-# --------
-# Capture real-time camera frames from the user's webcam, locate hand landmark coordinates,
-# process spatial coordinates to detect hand gestures, filter jitter, and trigger 
-# mouse cursor operations, clicking, drag-and-drops, scrollings, etc.
-# 
-# Libraries / Modules / Models Used:
-# ----------------------------------
-# - `cv2` (OpenCV - Webcam frame capture, conversions, visual tracking UI overlays)
-# - `mediapipe` (MediaPipe Hands model for tracking 21 spatial landmarks)
-# - `pyautogui` (OS-level mouse click, motion, and scroll action execution)
-# - `numpy` (Interpolations and moving average filter smoothing calculations)
-# - `json` (Loads calibration details from dextra_settings.json and dextra_custom_gestures.json)
-# 
-# Developer Implementation Guide:
-# -------------------------------
-# 1. Maintain a configurable frames buffer for smoothing transitions (moving average).
-# 2. Track distance ratios to trigger pinch clicks (e.g. index finger tip to thumb tip).
-# 3. Add gesture logic flags: Open Palm (rest/freeze), V-Spread (Alt-Tab swap), etc.
-# 4. Integrate custom gesture matching logic from loaded JSON.
-# 
-# Verification & Test Cases to Pass:
-# ----------------------------------
-# - Helper Test Case: MediaPipe Hands initializes and processes frames without memory leaks.
-# - Helper Test Case: Webcam frame capture matches configured index from dextra_settings.json.
-# - Sample Test Case: Verify frame processing loop sustains >=30 FPS.
-# - Sample Test Case: Double click timing logic correctly triggers double-clicks.
-# - Sample Test Case: Open Palm gesture immediately freezes coordinates.
-# 
-# ==============================================================================
+import time
+import threading
+import cv2
+from camera import CameraStream, encode_jpeg, load_camera_settings
+from gesture_engine import GestureEngine
+from gesture_mapping import GestureMapper
+
+class GestureMouse:
+    def __init__(self):
+        self.settings = load_camera_settings()
+        self.stream = CameraStream(settings=self.settings)
+        self.engine = GestureEngine()
+        self.mapper = GestureMapper()
+        
+        self.latest_frame_jpeg = b""
+        self.latest_finger_states = [False] * 5
+        self.frame_lock = threading.Lock()
+        
+        self.running = False
+        self.thread = None
+
+    def start(self):
+        if self.running:
+            return
+        self.running = True
+        self.thread = threading.Thread(target=self._loop, daemon=True)
+        self.thread.start()
+        print("Gesture Mouse thread started.")
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+        self.engine.close()
+        print("Gesture Mouse thread stopped.")
+
+    def _loop(self):
+        with self.stream:
+            for processed_frame in self.stream.frames():
+                if not self.running:
+                    break
+                
+                # Process with mediapipe
+                result = self.engine.process_frame(processed_frame.rgb)
+                
+                # Extract finger states for the trainer UI
+                finger_states = [False] * 5
+                if result["landmarks"]:
+                    finger_states = self.mapper.get_finger_states(result["landmarks"])
+                
+                # Map to mouse actions
+                self.mapper.process_landmarks(result["landmarks"])
+                
+                # Encode annotated frame to JPEG for WS stream
+                annotated_bgr = cv2.cvtColor(result["annotated_frame"], cv2.COLOR_RGB2BGR)
+                jpeg_bytes = encode_jpeg(annotated_bgr)
+                
+                with self.frame_lock:
+                    self.latest_frame_jpeg = jpeg_bytes
+                    self.latest_finger_states = finger_states
+
+    def get_latest_frame_and_states(self):
+        with self.frame_lock:
+            return self.latest_frame_jpeg, self.latest_finger_states
+
+    def get_latest_frame(self):
+        with self.frame_lock:
+            return self.latest_frame_jpeg
+
+# Singleton-like instance for use in FastAPI
+mouse_service = GestureMouse()
 
 if __name__ == "__main__":
-    print("DEXTRA Gesture Core Engine Stub - Developed by Salman")
-    print("For developer assignment documentation see: TEAM_DETAILS.txt")
+    try:
+        mouse_service.start()
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        mouse_service.stop()

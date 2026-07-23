@@ -1,41 +1,4 @@
-import { useState } from 'react';
-
-/**
- * DEXTRA Gestures Page
- *
- * Displays the complete 22-gesture reference categorized into groups,
- * with a search filter and category tabs.
- */
-
-const ALL_GESTURES = [
-  // Cursor & Click
-  { emoji: '☝️', name: 'Index Finger Up', desc: 'Only index extended, hand moves freely', action: 'Move Cursor', category: 'Cursor & Click' },
-  { emoji: '🤏', name: 'Quick Pinch', desc: 'Index + thumb briefly touch and release', action: 'Left Click', category: 'Cursor & Click' },
-  { emoji: '🤏🤏', name: 'Double Pinch', desc: 'Two rapid pinches within 0.35 s', action: 'Double Click', category: 'Cursor & Click' },
-  { emoji: '✊', name: 'Hold Pinch + Move', desc: 'Pinch held >0.6 s while moving hand', action: 'Drag & Drop', category: 'Cursor & Click' },
-  { emoji: '🖕', name: 'Middle + Thumb Pinch', desc: 'Middle finger + thumb touch', action: 'Right Click', category: 'Cursor & Click' },
-  { emoji: '🤌', name: 'Ring + Thumb Pinch', desc: 'Ring finger + thumb touch', action: 'Middle Click', category: 'Cursor & Click' },
-  { emoji: '👌', name: 'OK Sign', desc: 'Index + thumb circle, other fingers extended', action: 'Confirm / Enter', category: 'Cursor & Click' },
-  // Scrolling
-  { emoji: '✌️', name: 'Two Fingers + Move Up/Down', desc: 'Index & middle extended, hand moves vertically', action: 'Vertical Scroll', category: 'Scrolling & Navigation' },
-  { emoji: '✌️↔', name: 'Two Fingers Lateral', desc: 'Index & middle extended, hand moves left/right', action: 'Horizontal Scroll', category: 'Scrolling & Navigation' },
-  { emoji: '👋', name: 'Wrist Flick Left', desc: 'Quick leftward wrist snap (index up)', action: 'Navigate Back', category: 'Scrolling & Navigation' },
-  { emoji: '👋', name: 'Wrist Flick Right', desc: 'Quick rightward wrist snap (index up)', action: 'Navigate Forward', category: 'Scrolling & Navigation' },
-  { emoji: '☝️⬆', name: 'Index Hold Up (1s)', desc: 'Index up, hand stationary for 1 second', action: 'Page Up', category: 'Scrolling & Navigation' },
-  { emoji: '☝️⬇', name: 'Index Hold Down (1s)', desc: 'Index down, hand stationary for 1 second', action: 'Page Down', category: 'Scrolling & Navigation' },
-  // Zoom
-  { emoji: '🤏➡', name: 'Pinch Expand', desc: 'Thumb & index spread outward rapidly', action: 'Zoom In (Ctrl +)', category: 'Zoom' },
-  { emoji: '🤏⬅', name: 'Pinch Contract', desc: 'Thumb & index pinch inward rapidly', action: 'Zoom Out (Ctrl −)', category: 'Zoom' },
-  // Window
-  { emoji: '🖖', name: 'V-Spread', desc: 'Index & middle spread wide apart', action: 'Switch Window (Alt+Tab)', category: 'Window Management' },
-  { emoji: '✊', name: 'Closed Fist (still)', desc: 'All fingers curled, no movement for 0.5s', action: 'Minimize Window', category: 'Window Management' },
-  { emoji: '🖐', name: 'Four Fingers Up', desc: 'All fingers except thumb extended', action: 'Close Window (Alt+F4)', category: 'Window Management' },
-  { emoji: '🤟', name: 'Spider-Man Pose', desc: 'Thumb + index + pinky extended', action: 'Open Start Menu', category: 'Window Management' },
-  // System
-  { emoji: '✋', name: 'Open Palm', desc: 'All five fingers extended, hand still', action: 'Freeze / Rest Mode', category: 'System' },
-  { emoji: '🤙', name: 'Shaka Sign', desc: 'Thumb + pinky only extended', action: 'Toggle Voice Mode', category: 'System' },
-  { emoji: '🤞', name: 'Crossed Fingers', desc: 'Index + middle crossed', action: 'Lock Screen', category: 'System' },
-];
+import { useState, useEffect } from 'react';
 
 const CATEGORIES = ['All', 'Cursor & Click', 'Scrolling & Navigation', 'Zoom', 'Window Management', 'System'];
 
@@ -50,8 +13,16 @@ const CAT_COLORS = {
 const GesturesPage = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
+  const [gestures, setGestures] = useState([]);
+  
+  useEffect(() => {
+    fetch('http://localhost:8000/api/all-gestures')
+      .then(r => r.json())
+      .then(data => setGestures(data))
+      .catch(e => console.error("Failed to fetch gestures:", e));
+  }, []);
 
-  const filtered = ALL_GESTURES.filter(g => {
+  const filtered = gestures.filter(g => {
     const matchCat = activeCategory === 'All' || g.category === activeCategory;
     const q = search.toLowerCase();
     const matchSearch = !q || g.name.toLowerCase().includes(q) || g.action.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q);
@@ -64,7 +35,7 @@ const GesturesPage = () => {
         <div className="section-icon" aria-hidden="true">🤚</div>
         <div>
           <h1>Gesture Library</h1>
-          <p style={{ margin: 0 }}>All {ALL_GESTURES.length} built-in DEXTRA gestures across 5 categories.</p>
+          <p style={{ margin: 0 }}>All {gestures.length} built-in and custom DEXTRA gestures.</p>
         </div>
       </div>
 

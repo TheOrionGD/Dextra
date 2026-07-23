@@ -53,8 +53,24 @@ const Trainer = ({ showToast, showBackendAlert }) => {
   useEffect(() => { loadGestures(); }, [loadGestures]);
 
   /* ── WebSocket camera stream ── */
-  const startStream = useCallback(() => {
+  const startStream = useCallback(async () => {
     if (wsRef.current) return;
+
+    // Ensure backend engines (camera/voice) are running before connecting WS
+    try {
+      const statusRes = await fetch(`${API}/api/system-status`);
+      const status = await statusRes.json();
+      if (status.engine === 'Standby') {
+        const consent = window.confirm("DEXTRA needs your permission to activate the Camera and Microphone hardware for the gesture trainer. Allow access?");
+        if (!consent) return;
+        
+        await fetch(`${API}/api/engines/start`, { method: 'POST' });
+        // Give it a brief moment to spin up the camera thread
+        await new Promise(r => setTimeout(r, 800));
+      }
+    } catch (e) {
+      console.warn("Failed to check or start engines:", e);
+    }
 
     let ws;
     try {
@@ -125,7 +141,7 @@ const Trainer = ({ showToast, showBackendAlert }) => {
     setFps(0);
   }, []);
 
-  // Render loop
+  // Render loop for canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -141,9 +157,15 @@ const Trainer = ({ showToast, showBackendAlert }) => {
     animFrameRef.current = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [streaming]);
+
+  // Cleanup websocket on unmount
+  useEffect(() => {
+    return () => {
       stopStream();
     };
-  }, [streaming, stopStream]);
+  }, [stopStream]);
 
   /* ── Record gesture ── */
   const handleRecord = async () => {

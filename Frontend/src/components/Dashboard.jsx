@@ -1,40 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
-
-/**
- * DEXTRA Dashboard — Landing overview page with hero, stats, quick actions,
- * gesture reference cheat-sheet, and live system status summary.
- */
-
-const GESTURES = [
-  { emoji: '☝️', name: 'Index Finger Up', action: 'Move Cursor' },
-  { emoji: '🤏', name: 'Quick Pinch', action: 'Left Click' },
-  { emoji: '🤏🤏', name: 'Double Pinch', action: 'Double Click' },
-  { emoji: '✊', name: 'Hold Pinch + Move', action: 'Drag & Drop' },
-  { emoji: '🖕', name: 'Middle + Thumb', action: 'Right Click' },
-  { emoji: '🤌', name: 'Ring + Thumb', action: 'Middle Click' },
-  { emoji: '👌', name: 'OK Sign', action: 'Confirm / Enter' },
-  { emoji: '✌️', name: 'Two Fingers + Move', action: 'Vertical Scroll' },
-  { emoji: '✌️↔', name: 'Two Fingers Lateral', action: 'Horizontal Scroll' },
-  { emoji: '👋', name: 'Wrist Flick Left', action: 'Navigate Back' },
-  { emoji: '👋', name: 'Wrist Flick Right', action: 'Navigate Forward' },
-  { emoji: '🤏➡', name: 'Pinch Expand', action: 'Zoom In (Ctrl +)' },
-  { emoji: '🤏⬅', name: 'Pinch Contract', action: 'Zoom Out (Ctrl −)' },
-  { emoji: '🖖', name: 'V-Spread', action: 'Switch Window (Alt+Tab)' },
-  { emoji: '✊', name: 'Closed Fist (still)', action: 'Minimize Window' },
-  { emoji: '🖐', name: 'Four Fingers Up', action: 'Close Window (Alt+F4)' },
-  { emoji: '🤟', name: 'Spider-Man Pose', action: 'Open Start Menu' },
-  { emoji: '✋', name: 'Open Palm', action: 'Freeze / Rest Mode' },
-  { emoji: '🤙', name: 'Shaka Sign', action: 'Toggle Voice Mode' },
-  { emoji: '🤞', name: 'Crossed Fingers', action: 'Lock Screen' },
-];
-
-const STATS = [
-  { icon: '🤚', value: '22', label: 'Gestures' },
-  { icon: '🎙️', value: '40+', label: 'Voice Commands' },
-  { icon: '⚡', value: '30+', label: 'FPS Tracking' },
-  { icon: '🧠', value: '21', label: 'Hand Landmarks' },
-];
 
 const QUICK_ACTIONS = [
   {
@@ -67,17 +33,127 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const SYS_STATUS = [
-  { label: 'Engine', value: '🟡 Standby', note: 'Run python main.py' },
-  { label: 'Camera', value: '🔵 Index 0', note: 'Built-in webcam' },
-  { label: 'Voice Module', value: '🟢 Ready', note: 'Whisper tiny loaded' },
-  { label: 'Smoothing', value: '5 frames', note: 'Moving average buffer' },
-  { label: 'Click Threshold', value: '30 px', note: 'Pinch detection zone' },
-  { label: 'Cooldown', value: '0.3 s', note: 'Action debounce period' },
-];
+const API = 'http://localhost:8000';
 
 const Dashboard = () => {
+  const [gestures, setGestures] = useState([]);
+  const [systemStatus, setSystemStatus] = useState(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/api/all-gestures`)
+      .then(r => r.json())
+      .then(data => setGestures(data))
+      .catch(e => console.error("Error fetching gestures", e));
+      
+    fetch(`${API}/api/system-status`)
+      .then(r => r.json())
+      .then(data => {
+        setSystemStatus(data);
+        if (data.engine === 'Standby' && !permissionDenied) {
+          setShowPermissionModal(true);
+        }
+      })
+      .catch(e => console.error("Error fetching system status", e));
+  }, []);
+
+  const startEngines = () => {
+    setIsStarting(true);
+    fetch(`${API}/api/engines/start`, { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        setIsStarting(false);
+        if (data.status === 'success') {
+          setShowPermissionModal(false);
+          // Refetch system status
+          fetch(`${API}/api/system-status`)
+            .then(r => r.json())
+            .then(data => setSystemStatus(data));
+        } else {
+          console.error("Failed to start engines:", data.message);
+        }
+      })
+      .catch(e => {
+        setIsStarting(false);
+        console.error("Error starting engines", e);
+      });
+  };
+
+  const stats = systemStatus ? [
+    { icon: '🤚', value: systemStatus.total_gestures.toString(), label: 'Gestures' },
+    { icon: '🎙️', value: systemStatus.total_voice_commands.toString(), label: 'Voice Commands' },
+    { icon: '⚡', value: '30+', label: 'FPS Tracking' },
+    { icon: '🧠', value: '21', label: 'Hand Landmarks' },
+  ] : [
+    { icon: '🤚', value: '-', label: 'Gestures' },
+    { icon: '🎙️', value: '-', label: 'Voice Commands' },
+    { icon: '⚡', value: '-', label: 'FPS Tracking' },
+    { icon: '🧠', value: '-', label: 'Hand Landmarks' },
+  ];
+
+  const sysStatusArray = systemStatus ? [
+    { label: 'Engine', value: systemStatus.engine === 'Ready' ? '🟢 Ready' : '🟡 Standby', note: 'Run python main.py' },
+    { label: 'Camera', value: `🔵 ${systemStatus.camera}`, note: 'Current capture device' },
+    { label: 'Voice Module', value: systemStatus.voice_module === 'Ready' ? '🟢 Ready' : '🟡 Standby', note: 'Whisper pipeline' },
+    { label: 'Smoothing', value: systemStatus.smoothing, note: 'Moving average buffer' },
+    { label: 'Click Threshold', value: systemStatus.click_threshold, note: 'Pinch detection zone' },
+    { label: 'Cooldown', value: systemStatus.cooldown, note: 'Action debounce period' },
+  ] : [];
+
   return (
+    <>
+      {showPermissionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 m-4">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-[#BFDDF0]/40 rounded-full flex items-center justify-center">
+                <span className="text-3xl">🛡️</span>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-center text-slate-800 mb-3" style={{ margin: '0 0 12px 0' }}>Hardware Access Required</h2>
+            <p className="text-center text-slate-600 mb-8 leading-relaxed" style={{ marginBottom: '32px' }}>
+              DEXTRA needs to access your Camera and Microphone to track hand gestures and listen for voice commands. Everything is processed locally and securely.
+            </p>
+            <div className="flex gap-4" style={{ display: 'flex', gap: '16px' }}>
+              <button 
+                onClick={() => {
+                  setShowPermissionModal(false);
+                  setPermissionDenied(true);
+                }}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                disabled={isStarting}
+              >
+                Deny
+              </button>
+              <button 
+                onClick={startEngines}
+                className="flex-1 py-3 px-4 rounded-xl bg-slate-800 text-white font-semibold hover:bg-slate-700 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', backgroundColor: '#1e293b', color: 'white', cursor: 'pointer', border: 'none' }}
+                disabled={isStarting}
+              >
+                {isStarting ? 'Starting...' : 'Allow Access'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {permissionDenied && systemStatus?.engine === 'Standby' && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex justify-between items-center text-amber-800 text-sm font-medium z-40 relative" style={{ backgroundColor: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#92400e', fontSize: '14px', fontWeight: 500 }}>
+          <span>⚠️ Hardware access denied. Gestures and voice commands will not work.</span>
+          <button 
+            onClick={() => setShowPermissionModal(true)}
+            className="px-4 py-1.5 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors"
+            style={{ padding: '6px 16px', backgroundColor: '#fef3c7', borderRadius: '6px', border: 'none', cursor: 'pointer', color: '#92400e', fontWeight: 600 }}
+          >
+            Enable Access
+          </button>
+        </div>
+      )}
+
     <main className="dashboard">
       {/* ── Hero ── */}
       <section className="dash-hero animate-fade-up">
@@ -105,7 +181,7 @@ const Dashboard = () => {
       {/* ── Stats ── */}
       <section aria-label="System statistics" style={{ marginBottom: '40px' }}>
         <div className="stats-grid">
-          {STATS.map(s => (
+          {stats.map(s => (
             <div key={s.label} className="glass-card stat-card">
               <span className="stat-icon" aria-hidden="true">{s.icon}</span>
               <div className="stat-value">{s.value}</div>
@@ -147,7 +223,9 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="system-status-grid">
-            {SYS_STATUS.map(item => (
+            {sysStatusArray.length === 0 ? (
+              <div style={{ padding: '20px', color: '#8fa8bf', fontStyle: 'italic' }}>Loading system status from backend...</div>
+            ) : sysStatusArray.map(item => (
               <div key={item.label} className="sys-item">
                 <span className="sys-item-label">{item.label}</span>
                 <span className="sys-item-value">{item.value}</span>
@@ -167,7 +245,9 @@ const Dashboard = () => {
           </Link>
         </div>
         <div className="gesture-ref-grid">
-          {GESTURES.map((g, i) => (
+          {gestures.length === 0 ? (
+            <div style={{ padding: '20px', color: '#8fa8bf', fontStyle: 'italic' }}>Loading gesture dictionary from backend...</div>
+          ) : gestures.slice(0, 20).map((g, i) => (
             <div key={i} className="gesture-chip">
               <span className="gesture-emoji" aria-hidden="true">{g.emoji}</span>
               <div className="gesture-info">
@@ -179,6 +259,7 @@ const Dashboard = () => {
         </div>
       </section>
     </main>
+    </>
   );
 };
 

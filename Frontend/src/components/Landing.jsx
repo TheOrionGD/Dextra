@@ -21,7 +21,6 @@ import {
   Code
 } from 'lucide-react';
 
-import Section3DWelcome from './Section3DWelcome';
 
 const TOTAL_FRAMES = 51;
 // Pre-generate image URLs from /frames/frame_001.jpg to frame_051.jpg
@@ -39,7 +38,6 @@ export default function Landing() {
   // Loading states
   const [images, setImages] = useState([]);
   const [imagesProgress, setImagesProgress] = useState(0);
-  const [modelProgress, setModelProgress] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -107,17 +105,16 @@ export default function Landing() {
     });
   }, [isMobile]);
 
-  // Combined progress coordinator (coordinates loading both 2D frames and 3D model)
+  // Combined progress coordinator (coordinates loading 2D frames)
   useEffect(() => {
     if (isMobile) return;
-    const combined = Math.round((imagesProgress + modelProgress) / 2);
-    setLoadingProgress(combined);
-    if (imagesProgress === 100 && modelProgress === 100) {
+    setLoadingProgress(imagesProgress);
+    if (imagesProgress === 100) {
       setTimeout(() => {
         setIsLoading(false);
       }, 850);
     }
-  }, [imagesProgress, modelProgress, isMobile]);
+  }, [imagesProgress, isMobile]);
 
   // Track Mouse movement for glow overlay
   useEffect(() => {
@@ -389,16 +386,7 @@ export default function Landing() {
         }}
       />
 
-      {/* 3D Asset Overlay (Desktop only, fixed across entire landing page/system) */}
-      {!isMobile && (
-        <div className="fixed inset-0 w-full h-full pointer-events-none z-[20]">
-          <Section3DWelcome 
-            smoothProgress={smoothProgress}
-            onLoadProgress={setModelProgress}
-            onLoaded={() => setModelProgress(100)}
-          />
-        </div>
-      )}
+
 
       {/* ── MAIN SCROLLYTELLING CONTAINER ── */}
       <div ref={containerRef} className="relative h-[510vh] w-full bg-transparent">

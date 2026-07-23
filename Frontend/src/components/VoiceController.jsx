@@ -18,36 +18,7 @@ import './VoiceController.css';
 const API    = 'http://localhost:8000';
 const WS_URL = 'ws://localhost:8000/voice/stream';
 
-const CMD_CATEGORIES = [
-  {
-    title: '🧭 Navigation',
-    cmds: ['scroll up', 'scroll down', 'scroll top', 'scroll bottom', 'go back', 'go forward',
-           'page up', 'page down', 'zoom in', 'zoom out', 'reset zoom'],
-  },
-  {
-    title: '✏️ Editing',
-    cmds: ['copy', 'cut', 'paste', 'undo', 'redo', 'select all', 'save', 'find', 'delete', 'bold', 'italic'],
-  },
-  {
-    title: '🪟 Window & Tabs',
-    cmds: ['close tab', 'new tab', 'next tab', 'new window', 'close window', 'switch window',
-           'minimize', 'maximize', 'restore', 'snap left', 'snap right'],
-  },
-  {
-    title: '🎵 Media & Volume',
-    cmds: ['volume up', 'volume down', 'mute', 'play', 'pause', 'next track', 'previous track', 'fullscreen'],
-  },
-  {
-    title: '⚡ System & Apps',
-    cmds: ['screenshot', 'open explorer', 'show desktop', 'lock screen',
-           'task manager', 'open terminal', 'open notepad', 'open calculator'],
-  },
-  {
-    title: '🤚 DEXTRA Control',
-    cmds: ['start listening', 'stop listening', 'open trainer', 'open settings',
-           'toggle gestures', 'calibrate', 'help'],
-  },
-];
+
 
 // Format time as HH:MM:SS
 const fmt = () => new Date().toLocaleTimeString('en-GB');
@@ -60,6 +31,14 @@ const VoiceController = ({ showToast, showBackendAlert }) => {
   const [transcript, setTranscript]     = useState('');
   const [commandHistory, setCommandHistory] = useState([]);
   const [activeCategory, setActiveCategory] = useState(0);
+  const [cmdCategories, setCmdCategories] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API}/api/voice-commands`)
+      .then(r => r.json())
+      .then(data => setCmdCategories(data))
+      .catch(e => console.error("Error fetching voice commands", e));
+  }, []);
 
   const wsRef   = useRef(null);
   const logRef  = useRef(null);
@@ -168,20 +147,7 @@ const VoiceController = ({ showToast, showBackendAlert }) => {
     }
   };
 
-  /* ── Demo command (for testing without backend) ── */
-  const injectDemoCommand = () => {
-    const demo = [
-      { text: 'scroll up', action: 'PyAutoGUI: scroll(5)' },
-      { text: 'copy', action: 'PyAutoGUI: hotkey(ctrl, c)' },
-      { text: 'screenshot', action: 'PyAutoGUI: hotkey(win, shift, s)' },
-      { text: 'volume up', action: 'PyAutoGUI: press(volumeup)' },
-      { text: 'minimize', action: 'PyAutoGUI: hotkey(win, down)' },
-    ];
-    const pick = demo[Math.floor(Math.random() * demo.length)];
-    setCommandHistory(prev => [...prev.slice(-49), { ...pick, time: fmt() }]);
-    setTranscript(pick.text);
-    setTimeout(() => setTranscript(''), 1800);
-  };
+
 
   const micLabel = {
     standby:  '🎙️',
@@ -253,13 +219,9 @@ const VoiceController = ({ showToast, showBackendAlert }) => {
             >
               {transcript || (micState !== 'standby' ? '…awaiting speech…' : 'Voice engine inactive')}
             </div>
-
             <div style={{ display: 'flex', gap: '10px' }}>
               <button id="voice-toggle-btn" className={`btn ${micState !== 'standby' ? 'btn-danger' : 'btn-primary'}`} onClick={toggleListening}>
                 {micState !== 'standby' ? '⏹ Stop Listening' : '▶ Start Listening'}
-              </button>
-              <button className="btn btn-ghost" onClick={injectDemoCommand} title="Inject a demo command (testing)">
-                🧪 Demo
               </button>
             </div>
           </div>
@@ -369,7 +331,9 @@ const VoiceController = ({ showToast, showBackendAlert }) => {
 
             {/* Category tabs */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
-              {CMD_CATEGORIES.map((cat, i) => (
+              {cmdCategories.length === 0 ? (
+                <div style={{ padding: '10px', color: '#8fa8bf', fontStyle: 'italic' }}>Loading commands...</div>
+              ) : cmdCategories.map((cat, i) => (
                 <button
                   key={i}
                   className={`btn ${activeCategory === i ? 'btn-secondary' : 'btn-ghost'}`}
@@ -381,17 +345,21 @@ const VoiceController = ({ showToast, showBackendAlert }) => {
               ))}
             </div>
 
-            <div style={{ marginBottom: '8px', fontSize: '0.80rem', fontWeight: 700, color: '#546e8a' }}>
-              {CMD_CATEGORIES[activeCategory].title}
-            </div>
-            <div className="cmd-ref-grid">
-              {CMD_CATEGORIES[activeCategory].cmds.map(cmd => (
-                <div key={cmd} className="cmd-ref-item">
-                  <span style={{ color: '#8CC0EB', fontSize: '0.80rem' }}>▸</span>
-                  <span>"{cmd}"</span>
+            {cmdCategories.length > 0 && (
+              <>
+                <div style={{ marginBottom: '8px', fontSize: '0.80rem', fontWeight: 700, color: '#546e8a' }}>
+                  {cmdCategories[activeCategory]?.title}
                 </div>
-              ))}
-            </div>
+                <div className="cmd-ref-grid">
+                  {cmdCategories[activeCategory]?.cmds.map(cmd => (
+                    <div key={cmd} className="cmd-ref-item">
+                      <span style={{ color: '#8CC0EB', fontSize: '0.80rem' }}>▸</span>
+                      <span>"{cmd}"</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Status info */}

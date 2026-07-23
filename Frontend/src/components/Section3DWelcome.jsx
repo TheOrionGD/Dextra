@@ -440,6 +440,8 @@ export default function Section3DWelcome({
       
       document.body.style.cursor = '';
       
+      cancelAnimationFrame(animationFrameId);
+      
       renderer.dispose();
       coreMaterial.dispose();
       coreGeo.dispose();

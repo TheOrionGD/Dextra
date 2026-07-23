@@ -26,101 +26,80 @@
 
 ---
 
-
-
-
-## Developer Story
-
-### Why We Built It
-Human-Computer Interaction (HCI) has been anchored to the physical desktop mouse for over four decades. While the mouse is highly precise, its dependency on fine motor controls and flat physical surfaces introduces accessibility barriers. Individuals suffering from motor disabilities, tremors, or repetitive strain injuries (RSI) find mouse interactions painful or impossible. In environments like sterile operating theatres, chemical cleanrooms, and automated warehouses, touchless computer interactions are a necessity to preserve hygiene and safety.
-
-DEXTRA was born from the desire to break down these physical constraints. Our goal was to design a touchless desktop pointing utility that relies entirely on standard hardware: a built-in laptop webcam and integrated microphone. By bypassing the need for specialized spatial depth cameras, we wanted to make hand-gesture and local voice-driven navigation accessible to everyone.
-
-### Who We Are
-We are a team of four software engineers, each bringing specialized skills to make DEXTRA highly modular and performant:
-* **Salman (Core Gesture & Tracking Engine)**: Specializes in computer vision pipelines. Salman structured the webcam stream ingestion, coordinates remapping, MediaPipe landmark data processing, and PyAutoGUI OS action bindings.
-* **Logesh (Voice Command Engine)**: Expert in local deep learning and signal capture. Logesh designed the sounddevice background threads, custom wakeword classifiers, and Hugging Face transformer audio pipelines.
-* **Muthamil (FastAPI Backend & Launch Systems)**: Focuses on backend API development. Muthamil engineered the FastAPI REST server, WebSockets image broadcasting, configuration file locks, and launcher menu systems.
-* **Godfrey (React Settings & Trainer SPA)**: Frontend developer. Godfrey built the Vite React client panels, HTML5 Canvas live video feed receivers, settings forms bindings, and the voice controller components.
-
-### Challenges Faced
-* **Webcam Cursor Jitter**: Normal hand tremors introduce visible jitter when translating landmark points directly to screen coordinates. We solved this by developing a multi-frame moving average smoothing buffer inside the coordinate interpolation module.
-* **CPU and Memory Management**: Running deep learning speech-to-text models locally on standard laptops can strain system resources. We resolved this by selecting lightweight quantized models (such as `openai/whisper-tiny`) and utilizing lazy loading, ensuring the audio capture engine remains responsive on single-thread runs.
-* **Audio Capture Thread Blocking**: Continuously monitoring audio input can block the camera processing loop. We structured the wakeword detector and speech transcriber as background daemon threads, coordinating text command outputs via thread-safe Queues.
-
-### How We Built It
-We chose to build DEXTRA with a decoupled, modular design to ensure that developers can work on components without creating single-file code bloat. The system is split into 8 specialized Python modules running as background daemons, coordinating through configuration files and thread-safe queues. The settings GUI is built as a React Single Page Application (SPA), served locally by a FastAPI server.
-
-Instead of writing custom convolutional neural networks for hand landmark detection, we utilized Google's MediaPipe Hands, which provides highly optimized, real-time 3D hand tracking directly on CPU, keeping processing frame rates above 30 FPS.
-
-### Security & UX
-* **Webcam and Voice Privacy**: DEXTRA does not send webcam frames or audio recordings to external cloud APIs. All computer vision tracking and speech-to-text models run locally on the host device.
-* **Responsive Visual Feedback**: The React settings panel displays real-time annotated camera streams using WebSockets, providing users with immediate feedback on gesture thresholds.
-* **Rest Mode**: An "Open Palm" gesture suspends mouse coordinate updates, allowing users to rest their arms without triggering accidental cursor clicks or movements.
-
-### Key Learnings
-* **Decoupled Architecture**: Decoupling the visual tracking, speech transcription, and config management into 8 distinct scripts allowed us to isolate thread behaviors and prevent lockouts.
-* **Open-Source Model Quantization**: Standard open-source ASR models can run efficiently on consumer CPU hardware when configured with quantized pipelines.
-* **Dynamic Canvas Rendering**: Rendering high-frequency binary JPEG streams onto HTML5 Canvas via WebSockets provides a low-overhead preview window.
-
-### Future Roadmap
-* **Kalman Filter Integration**: Replace the moving average filter with a Kalman filter to improve tracking precision and eliminate cursor latency.
-* **Eye-Tracking Fusion**: Integrate eye-tracking models via MediaPipe Iris to direct cursor focus, using hand gestures solely for click and scroll execution.
-* **Tray Application Packaging**: Bundle DEXTRA into a silent system tray application using `pystray` and compile into a portable executable using `PyInstaller`.
-* **Multi-Hand Gesture Support**: Support two-hand gestures for spatial tasks like zooming, rotating 3D models, and multi-monitor switching.
-
-### Developer Message
-> "DEXTRA represents our commitment to touchless, accessible computing. By sharing this modular structure, we hope developers will expand upon this framework to build innovative assistive tools, cleanroom controllers, and space-saving computing solutions. Welcome to the code!"
->
-> — *The DEXTRA Development Team*
-
----
-
 ## Table of Contents
-1. [Project Overview](#project-overview)
-2. [System Architecture](#system-architecture)
-3. [Folder Structure](#folder-structure)
-4. [Core Gesture Engine & Mappings](#core-gesture-engine--mappings)
-5. [Hugging Face Voice command Engine](#hugging-face-voice-command-engine)
-6. [API & WebSocket Specifications](#api--websocket-specifications)
-7. [Configuration Schema](#configuration-schema)
-8. [Installation & Deployment](#installation--deployment)
-9. [Verification & Testing](#verification--testing)
-10. [Security & Compliance](#security--compliance)
-11. [Performance & Scalability](#performance--scalability)
-12. [Troubleshooting & FAQ](#troubleshooting--faq)
-13. [Contributors & Licensing](#contributors--licensing)
+1. [Executive Summary & Concept](#executive-summary--concept)
+2. [Problem Statement](#problem-statement)
+3. [Developer Story & Team Assignments](#developer-story--team-assignments)
+4. [System Architecture & Data Flow](#system-architecture--data-flow)
+5. [Folder & Component Structure](#folder--component-structure)
+6. [Core Gesture Engine & Gesture Catalog](#core-gesture-engine--gesture-catalog)
+7. [Voice Command Engine & Command Catalog](#voice-command-engine--command-catalog)
+8. [Settings GUI & Gesture Trainer](#settings-gui--gesture-trainer)
+9. [API & WebSocket Specifications](#api--websocket-specifications)
+10. [Configuration Schema](#configuration-schema)
+11. [System Requirements](#system-requirements)
+12. [Installation & Deployment](#installation--deployment)
+13. [Verification & Testing](#verification--testing)
+14. [Challenges, Mitigations & Future Roadmap](#challenges-mitigations--future-roadmap)
+15. [Development Roadmap (14-Day Timeline)](#development-roadmap-14-day-timeline)
+16. [Contributors & Licensing](#contributors--licensing)
 
 ---
 
-## Project Overview
+## Executive Summary & Concept
 
-DEXTRA is a cross-platform pointer system that replaces the traditional desktop mouse with webcam-based gesture tracking and voice command execution. Using standard computer vision algorithms and local deep learning pipelines, DEXTRA translates hand poses and spoken commands into OS-level mouse and keyboard actions.
+DEXTRA is a software solution that replaces the conventional computer mouse with real-time hand gesture recognition via a standard webcam. Using Google's MediaPipe framework for hand landmark detection, DEXTRA maps natural hand gestures to every standard mouse operation — including cursor movement, left and right clicking, double-clicking, drag-and-drop, and scrolling — without requiring specialized hardware depth cameras.
+
+DEXTRA is further enhanced by:
+- **Voice Command Engine**: 40+ spoken commands across 6 categories powered by local Hugging Face transformer models (`openai/whisper-tiny`).
+- **Settings GUI**: A browser-based React SPA local control panel served by FastAPI.
+- **Gesture Trainer Module**: Allows users to record, name, and assign custom hand poses to OS shortcuts.
+
+**Key Value**: DEXTRA delivers a fully mouse-free computing experience using 22 hand gestures, 40+ voice commands, and a standard laptop webcam — no specialized hardware required.
+
+---
+
+## Problem Statement
+
+The physical mouse has remained the dominant pointing device for over four decades. While reliable, it presents barriers in several real-world scenarios:
+1. **Accessibility**: Users with limited hand mobility or physical disabilities struggle with precise physical mouse control.
+2. **Hygiene-Sensitive Environments**: Medical, cleanroom, and laboratory settings require touchless interaction with computer systems.
+3. **Space Constraints**: Mobile workers and students in crowded environments often lack a flat physical surface for mouse operation.
+4. **AR/VR & Kiosk Environments**: Emerging interfaces have no surface on which a physical mouse can operate.
+5. **Fatigue & RSI**: Prolonged mouse use contributes to Repetitive Strain Injury.
+
+DEXTRA addresses all five scenarios simultaneously by providing a hygienic, natural, and hardware-free input alternative.
+
+---
+
+## Developer Story & Team Assignments
+
+### Team Member Assignments & Responsibilities
+
+| Team Member | Role / Focus Area | Assigned Modules | Key Responsibilities |
+| :--- | :--- | :--- | :--- |
+| **Salman** | Core Gesture & Tracking Engine | `python/camera.py`<br>`python/gesture_engine.py`<br>`python/gesture_mapping.py` | Video capture, MediaPipe 21 landmark detection, smoothing filter, PyAutoGUI mouse event binding. |
+| **Logesh** | Voice Command Engine | `python/voice_wakeword.py`<br>`python/voice_engine.py`<br>`python/voice_mapping.py` | Background audio capture, "DEXTRA" wakeword monitor, Hugging Face Whisper ASR transcription, shortcut mapper. |
+| **Muthamil** | FastAPI Backend GUI Server | `python/config.py`<br>`python/gui_server.py`<br>`python/main.py` | File lock thread safety on config JSONs, FastAPI REST & WebSockets JPEG stream, system CLI launcher menu. |
+| **Godfrey** | React Settings & Trainer SPA | `Frontend/` React Application | Vite React SPA layout, WebSocket HTML5 Canvas video feed renderer, voice controller status component, form bindings. |
+
+---
+
+## System Architecture & Data Flow
+
+DEXTRA's architecture separates tasks into distinct background daemon threads. Visual tracking, speech transcription, configuration management, and the API server run concurrently, sharing state via configuration files and thread-safe queues.
 
 ```
 +------------------+     +--------------------+     +-------------------+
 |  Webcam Input    | --> | OpenCV/MediaPipe   | --> | PyAutoGUI Mouse   |
 |  (30+ FPS Frame) |     | Landmark Engine    |     | Event Execution   |
 +------------------+     +--------------------+     +-------------------+
-                                                              ^
+                                                               ^
 +------------------+     +--------------------+               |
 |  Mic Audio       | --> | Hugging Face       | --------------+
 |  (Local Stream)  |     | Whisper STT Engine |
 +------------------+     +--------------------+
 ```
-
-### High-Fidelity Dashboards
-The system features a React-based settings GUI dashboard styled to resemble modern business intelligence platforms (e.g. Power BI). It provides:
-* **KPI Progress Indicators**: Total tasks, completion progress, active QA bugs.
-* **Resource Workload Visualizations**: Column charts showing workload distribution per developer.
-* **Real-Time Video Preview Canvas**: WebSocket-driven preview showing MediaPipe landmark tracking overlay.
-* **Voice Transcription Console**: Real-time display of recognized speech commands and active wakeword triggers.
-
----
-
-## System Architecture
-
-DEXTRA's architecture separates tasks into distinct background daemon threads. Visual tracking, speech transcription, configuration management, and the API server run concurrently, sharing state via configuration files and thread-safe queues.
 
 ### Thread Communication & Data Flow
 
@@ -145,108 +124,65 @@ graph TD
     L -->|Update Settings| J
 ```
 
-### Sequence Diagram: Wakeword & Speech Command Pipeline
-
-The sequence below illustrates how background threads process audio input when the user activates the system:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Mic as sounddevice Mic Input
-    participant Wake as python/voice_wakeword.py
-    participant Engine as python/voice_engine.py
-    participant Map as python/voice_mapping.py
-    participant OS as PyAutoGUI OS Execution
-    
-    Note over Wake: Calibrates Ambient Noise on Startup
-    loop Continuous Monitoring
-        User->>Mic: Spoken Audio Stream
-        Mic->>Wake: Raw Float Audio Buffers
-        Wake->>Wake: Check Wakeword (e.g. "DEXTRA")
-    end
-    
-    Wake->>Engine: Wakeword Detected! Enable Transcription
-    User->>Mic: "copy"
-    Mic->>Engine: Audio command Buffer
-    Engine->>Engine: Process Whisper-tiny ASR Pipeline
-    Engine->>Map: Transcribed string: "copy"
-    Map->>Map: Match text command
-    Map->>OS: Execute pyautogui.hotkey("ctrl", "c")
-    OS-->>User: Clipboard contents updated
-```
-
-### Sequence Diagram: Visual Tracking & Cursor Mapping
-
-The sequence below illustrates how visual frames are captured and translated into mouse movements:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Cam as OpenCV VideoCapture
-    participant Frame as python/camera.py
-    participant Model as python/gesture_engine.py
-    participant Map as python/gesture_mapping.py
-    participant OS as PyAutoGUI Mouse Control
-    
-    loop Real-Time Ingestion
-        User->>Cam: Hand Movement
-        Cam->>Frame: Read BGR Frame
-        Frame->>Frame: Flip Mirror & Convert to RGB
-        Frame->>Model: Formatted Frame
-        Model->>Model: Process MediaPipe Landmarks
-        Model->>Map: 21 Landmarks coordinate list
-        Map->>Map: Interpolate coordinates to Screen Resolution
-        Map->>Map: Apply Moving Average Filter
-        Map->>OS: Move Cursor / Trigger Click
-        OS-->>User: Pointer moves on screen
-    end
-```
+### Data Processing Pipeline
+1. **Webcam Frame Capture**: OpenCV captures a raw BGR frame at 30+ FPS.
+2. **Pre-processing**: Frame is mirrored (flipped) and converted to RGB color space.
+3. **Hand Detection**: MediaPipe locates 21 3D landmark coordinates on the hand.
+4. **Gesture Logic**: Python checks finger extension states and landmark Euclidean distances.
+5. **Coordinate Mapping**: NumPy interpolates index finger position to screen resolution.
+6. **Smoothing Filter**: Moving average buffer removes hand tremor jitter.
+7. **Mouse Execution**: PyAutoGUI issues OS-level pointer or hotkey events.
+8. **UI Overlay**: Annotated frame delivery to WebSocket clients at 30 FPS.
 
 ---
 
-## Folder Structure
-
-Below is the directory layout of the DEXTRA codebase. The backend is split into 8 modules to ensure that files remain focused and easily testable:
+## Folder & Component Structure
 
 ```
 Dextra/
-├── DEXTRA_System_Architecture.txt   # Detailed stack overview and developer assignment mapping
-├── DEXTRA_Project_Tracker.xlsx      # Interactive multi-sheet task board (Dashboard, Logs, Bugs)
-├── DEXTRA_Concept_Proposal.txt      # System capabilities, specifications, and roadmap proposal
-├── .gitignore                       # Ignored build folders, virtualenvs, and deep learning model weights
-├── README.md                        # High-level overview, architecture details, and deployment guides
-├── LICENSE                          # MIT open-source license documentation
-├── dextra_settings.json             (Configuration database mapping thresholds and active camera index)
-├── dextra_custom_gestures.json      (Mapped custom gestures shapes database)
-├── requirements.txt                 (Python package dependencies manifest)
+├── README.md                        # Primary documentation & architecture guide
+├── LICENSE                          # MIT open-source license
+├── dextra_settings.json             # System configurations and thresholds database
+├── dextra_custom_gestures.json      # Saved custom trained hand poses database
+├── requirements.txt                 # Python dependencies manifest
+├── run_dextra.ps1                   # PowerShell automated launcher script
 ├── python/                          # Python backend daemon files
-│   ├── main.py                      (CLI launcher interface)
-│   ├── config.py                    (Thread-safe settings read/write module)
+│   ├── main.py                      (CLI launcher interface & menu)
+│   ├── config.py                    (Thread-safe settings manager)
 │   ├── camera.py                    (OpenCV webcam frame capture loop)
-│   ├── gesture_engine.py            (MediaPipe hand landmarks detector)
-│   ├── gesture_mapping.py           (PyAutoGUI mouse movements and coordinates smooth filter)
+│   ├── gesture_engine.py            (MediaPipe hand landmarker engine)
+│   ├── gesture_mapping.py           (PyAutoGUI mouse movements and coordinates filter)
 │   ├── voice_wakeword.py            (Background audio wakeword monitor)
 │   ├── voice_engine.py              (Hugging Face speech-to-text pipeline)
-│   └── gui_server.py                (FastAPI REST/WebSockets server)
-└── gui/                             # React frontend client
-    ├── package.json                 # Node package manifests
-    ├── vite.config.js               # Vite configurations proxying endpoints to port 8000
-    ├── index.html                   # HTML SPA template
-    └── src/                         # React source code folder
-        ├── main.jsx                 # Entry point
-        ├── App.jsx                  # Main router view
-        ├── index.css                # CSS variables, grid, and glassmorphic designs
-        └── components/              # UI Component modules
-            └── VoiceController.jsx  (Wakeword status logs component)
+│   ├── voice_mapping.py             (Shortcut and command execution mapper)
+│   └── gui_server.py                (FastAPI REST & WebSockets server)
+├── Frontend/                        # React frontend client
+│   ├── package.json                 # Node package manifest
+│   ├── vite.config.js               # Vite configuration proxying requests to port 8000
+│   ├── index.html                   # HTML SPA template
+│   └── src/                         # React components & styles
+│       ├── main.jsx                 # Client entry point
+│       ├── App.jsx                  # Main router navigation wrapper
+│       ├── index.css                # CSS variables, glassmorphism, and dark theme
+│       └── components/              # Modular UI view components
+│           ├── Dashboard.jsx        (System Overview & status KPIs)
+│           ├── Trainer.jsx          (Gesture Trainer & canvas recorder)
+│           ├── VoiceController.jsx  (Voice engine controls & logs)
+│           ├── Settings.jsx         (Configuration sliders and options)
+│           └── CommandPalette.jsx   (Searchable command modal)
+└── tests/                           # Unit & Integration test suites
+    ├── test_api.py                  (FastAPI REST endpoint tests)
+    ├── test_camera.py               (OpenCV capture & setting tests)
+    ├── test_config.py               (SettingsManager CRUD & fallback tests)
+    ├── test_gesture_mapping.py      (Finger states & posture heuristic tests)
+    └── test_voice_mapping.py        (Command matching & alias tests)
 ```
 
 ---
 
-## Core Gesture Engine & Mappings
+## Core Gesture Engine & Gesture Catalog
 
-DEXTRA tracks 21 coordinates on the hand, dividing them into categories like thumb position and finger states.
+DEXTRA tracks 21 3D coordinates on the hand, using landmark spatial relationships to classify gestures.
 
 ```
        8   12  16  20
@@ -263,161 +199,111 @@ DEXTRA tracks 21 coordinates on the hand, dividing them into categories like thu
               0__/
 ```
 
-### Landmark Definitions
+### Complete 22 Gesture Catalog
 
-| Index | Landmark Name | Index | Landmark Name |
-| :--- | :--- | :--- | :--- |
-| **0** | WRIST | **11** | MIDDLE_FINGER_PIP |
-| **1** | THUMB_CMC | **12** | MIDDLE_FINGER_TIP |
-| **2** | THUMB_MCP | **13** | RING_FINGER_MCP |
-| **3** | THUMB_IP | **14** | RING_FINGER_PIP |
-| **4** | THUMB_TIP | **15** | RING_FINGER_DIP |
-| **5** | INDEX_FINGER_MCP | **16** | RING_FINGER_TIP |
-| **6** | INDEX_FINGER_PIP | **17** | PINKY_MCP |
-| **7** | INDEX_FINGER_DIP | **18** | PINKY_PIP |
-| **8** | INDEX_FINGER_TIP | **19** | PINKY_DIP |
-| **9** | MIDDLE_FINGER_MCP | **20** | PINKY_TIP |
-| **10** | MIDDLE_FINGER_DIP | | |
+#### Cursor & Click
+| Gesture | Description | Action |
+| :--- | :--- | :--- |
+| ☝️ **Index Finger Up** | Only index finger extended, hand moves freely | Move Cursor |
+| 🤏 **Quick Pinch** | Index + thumb touch and release | Left Click |
+| 🤏🤏 **Double Pinch** | Two rapid pinches within 0.35s | Double Click |
+| ✊ **Hold Pinch + Move** | Pinch held >0.6s while moving hand | Drag & Drop |
+| 🖕 **Middle + Thumb Pinch** | Middle finger + thumb touch | Right Click |
+| 🤌 **Ring + Thumb Pinch** | Ring finger + thumb touch | Middle Click |
+| 👌 **OK Sign** | Index + thumb form circle, other fingers extended | Confirm / Enter Key |
 
-### Gesture Mapping Configuration
+#### Scrolling & Navigation
+| Gesture | Description | Action |
+| :--- | :--- | :--- |
+| ✌️ **Two Fingers Up + Move** | Index & middle extended, move up/down | Vertical Scroll |
+| ✌️↔ **Two Fingers Lateral** | Index & middle extended, move left/right | Horizontal Scroll |
+| 👋 **Wrist Flick Left** | Quick leftward wrist snap (index up) | Navigate Back |
+| 👋 **Wrist Flick Right** | Quick rightward wrist snap (index up) | Navigate Forward |
+| ☝️⬆ **Index Hold Up (1s)** | Index up, hand stationary for 1 second | Page Up |
+| ☝️⬇ **Index Hold Down (1s)** | Index down, hand stationary for 1 second | Page Down |
 
-The system translates hand landmarks into mouse events.
+#### Zoom
+| Gesture | Description | Action |
+| :--- | :--- | :--- |
+| 🤏➡ **Pinch Expand** | Thumb & index spread outward rapidly | Zoom In (`Ctrl +`) |
+| 🤏⬅ **Pinch Contract** | Thumb & index pinch inward rapidly | Zoom Out (`Ctrl -`) |
 
-```
-            ☝️ (Index Up)             🤏 (Index+Thumb Pinch)
-           Cursor Movement                 Left Click
-                |                              |
-                v                              v
-        +---------------+              +---------------+
-        |  Landmark 8   |              | Distance (4,8)|
-        |  High Coords  |              | < Threshold   |
-        +---------------+              +---------------+
-```
+#### Window Management
+| Gesture | Description | Action |
+| :--- | :--- | :--- |
+| 🖖 **V-Spread** | Index & middle spread wide apart | Switch Window (`Alt+Tab`) |
+| ✊ **Closed Fist (still)** | All fingers curled, no movement for 0.5s | Minimize Window |
+| 🖐 **Four Fingers Up** | All fingers except thumb extended | Close Window (`Alt+F4`) |
+| 🤟 **Spider-Man Pose** | Thumb + index + pinky extended | Open Start Menu |
 
-* **Cursor Movement**: Driven by the coordinate of the Index Finger Tip (Landmark 8). It maps finger movements to the screen's dimensions.
-* **Left Click**: Triggered when the spatial distance between the Index Finger Tip (Landmark 8) and the Thumb Tip (Landmark 4) falls below the threshold.
-* **Double Click**: Triggered by executing two quick pinch gestures within 0.35 seconds.
-* **Right Click**: Triggered by pinching the Middle Finger Tip (Landmark 12) and the Thumb Tip (Landmark 4).
-* **Vertical Scroll**: Triggered by raising both the Index (8) and Middle (12) fingers, then moving the hand vertically.
-* **Freeze Mode (Rest)**: Triggered by an Open Palm (all 5 fingers extended and stationary), which halts cursor updates.
+#### System Controls
+| Gesture | Description | Action |
+| :--- | :--- | :--- |
+| ✋ **Open Palm** | All 5 fingers extended, hand still | Freeze / Rest Mode |
+| 🤙 **Shaka Sign** | Thumb + pinky extended | Toggle Voice Mode |
+| 🤞 **Crossed Fingers** | Index + middle crossed | Lock Screen |
 
 ---
 
-## Hugging Face Voice Command Engine
+## Voice Command Engine & Command Catalog
 
-Instead of relying on cloud ASR endpoints, DEXTRA transcribes speech locally using Hugging Face's transformers library.
+DEXTRA transcribes speech locally using Hugging Face's `transformers` library (`openai/whisper-tiny`).
 
-```
-+--------------------+      +-----------------------+      +--------------------+
-|  sounddevice Mic   | ---> | numpy RMS Signal      | ---> | Transcribe Audio   |
-|  Audio Ingestion   |      | checks for "DEXTRA"   |      | via Whisper-tiny   |
-+--------------------+      +-----------------------+      +--------------------+
-                                                                     |
-                                                                     v
-                                                           +--------------------+
-                                                           | Map text to        |
-                                                           | PyAutoGUI hotkeys  |
-                                                           +--------------------+
-```
+### 40+ Voice Commands Catalog
 
-### Wakeword Classifier (`python/voice_wakeword.py`)
-This module monitors audio input from the microphone in the background. It calculates the Root Mean Square (RMS) of the signal to detect speech, then matches the audio to the wakeword phrase (e.g. "DEXTRA" or "DEXTRA activate"). Once the wakeword is detected, it triggers the STT pipeline (`python/voice_engine.py`).
+| Category | Commands |
+| :--- | :--- |
+| **Editing** | `"copy"`, `"cut"`, `"paste"`, `"undo"`, `"redo"`, `"select all"`, `"save"`, `"save as"`, `"find"`, `"replace"`, `"delete"`, `"bold"`, `"italic"`, `"underline"`, `"new line"` |
+| **Navigation** | `"scroll up"`, `"scroll down"`, `"scroll top"`, `"scroll bottom"`, `"go back"`, `"go forward"`, `"page up"`, `"page down"`, `"zoom in"`, `"zoom out"`, `"reset zoom"` |
+| **Window & Tab** | `"close tab"`, `"new tab"`, `"reopen tab"`, `"next tab"`, `"previous tab"`, `"new window"`, `"close window"`, `"switch window"`, `"minimize"`, `"maximize"`, `"restore"`, `"task view"`, `"snap left"`, `"snap right"` |
+| **Media & Volume** | `"volume up"`, `"volume down"`, `"mute"`, `"unmute"`, `"play"`, `"pause"`, `"play pause"`, `"next track"`, `"previous track"`, `"fullscreen"`, `"exit fullscreen"` |
+| **System & Apps** | `"screenshot"`, `"open explorer"`, `"show desktop"`, `"lock screen"`, `"open settings"`, `"task manager"`, `"open notepad"`, `"open calculator"` |
+| **DEXTRA Control** | `"start listening"`, `"stop listening"`, `"open trainer"`, `"open settings"`, `"toggle gestures"`, `"calibrate"`, `"help"` |
 
-### Speech-to-Text Pipeline (`python/voice_engine.py`)
-Once activated, DEXTRA records the subsequent audio buffer block (typically 2 to 3 seconds) and transcribes it using a local Whisper pipeline:
+---
 
-```python
-# Code example: Initializing local Hugging Face ASR model pipeline
-from transformers import pipeline
-import torch
+## Settings GUI & Gesture Trainer
 
-asr_pipeline = pipeline(
-    "automatic-speech-recognition",
-    model="openai/whisper-tiny",
-    device="cuda" if torch.cuda.is_available() else "cpu",
-    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
-)
-```
+### Settings GUI
+The React-based settings dashboard enables users to configure system parameters without code edits:
+- Camera Selection (internal webcam index `0` vs external USB camera `1`).
+- Cursor Smoothing Level (1–15 frame moving average buffer).
+- Click Distance Threshold (pixels).
+- Drag Hold Time & Double-click Timing.
+- Cooldown Period between actions.
 
-### Voice Command Mappings (`python/voice_mapping.py`)
-The transcribed text command is processed to find keywords. Mapped commands trigger corresponding keyboard actions:
-
-| Voice Command Category | Spoken Phrase | Triggered Action |
-| :--- | :--- | :--- |
-| **Editing** | "copy" | `pyautogui.hotkey("ctrl", "c")` |
-| **Editing** | "paste" | `pyautogui.hotkey("ctrl", "v")` |
-| **Editing** | "undo" | `pyautogui.hotkey("ctrl", "z")` |
-| **Editing** | "select all" | `pyautogui.hotkey("ctrl", "a")` |
-| **Editing** | "save" | `pyautogui.hotkey("ctrl", "s")` |
-| **Window Management** | "minimize" | `pyautogui.hotkey("win", "down")` |
-| **Window Management** | "maximize" | `pyautogui.hotkey("win", "up")` |
-| **Window Management** | "close window" | `pyautogui.hotkey("alt", "f4")` |
-| **Window Management** | "switch window" | `pyautogui.hotkey("alt", "tab")` |
-| **System Controls** | "screenshot" | `pyautogui.hotkey("win", "prtscr")` |
+### Gesture Trainer
+The Gesture Trainer features a real-time HTML5 Canvas preview fed via WebSockets (`/trainer/stream`). Users can:
+1. Hold a custom hand posture in front of the webcam.
+2. Observe live 5-finger extended/curled state indicators.
+3. Enter a custom gesture name and map it to a system action.
+4. Hit Record (3-second countdown) to save custom postures to `dextra_custom_gestures.json`.
 
 ---
 
 ## API & WebSocket Specifications
 
-Muthamil's FastAPI backend (`python/gui_server.py`) hosts a REST API for configuration management and WebSockets for streaming camera feeds to the React frontend.
+### REST API Endpoints
+- `GET /health` -> `{"status": "ok"}`
+- `GET /settings` -> Returns `dextra_settings.json` parameters.
+- `POST /settings` -> Persists updated configuration options.
+- `GET /gestures` -> Returns list of saved custom gestures.
+- `POST /gestures` -> Saves a new custom gesture payload.
+- `DELETE /gestures/{name}` -> Deletes a saved custom gesture by name.
+- `GET /api/system-status` -> Returns live statuses for mouse engine, voice engine, camera index, smoothing frames, and gesture counts.
+- `GET /api/all-gestures` -> Returns combined list of built-in and custom gestures.
+- `GET /api/voice-commands` -> Returns voice command categories reference.
+- `POST /api/engines/start` -> Activates camera tracking and voice daemon worker threads.
 
-### REST Endpoints
-
-#### 1. Retrieve Current Settings
-* **Route**: `GET /api/settings`
-* **Response Content-Type**: `application/json`
-* **Response Schema**:
-```json
-{
-  "camera_index": 0,
-  "cursor_smoothing": 5,
-  "click_threshold_px": 30,
-  "drag_hold_time_sec": 0.6,
-  "double_click_time_sec": 0.35,
-  "cooldown_period_sec": 0.3,
-  "voice_commands_enabled": true,
-  "gesture_trainer_enabled": true
-}
-```
-
-#### 2. Update Configuration Settings
-* **Route**: `POST /api/settings`
-* **Request Content-Type**: `application/json`
-* **Request Payload**:
-```json
-{
-  "camera_index": 0,
-  "cursor_smoothing": 8,
-  "click_threshold_px": 35
-}
-```
-* **Response Schema**:
-```json
-{
-  "status": "success",
-  "message": "Configuration parameters persisted successfully."
-}
-```
-
----
-
-### WebSockets Stream
-
-#### Live Annotated Frame Stream
-* **Route**: `WS /api/stream`
-* **Protocol**: WebSocket
-* **Function**: Delivers mirrored, resized OpenCV webcam frames to the React client app. The frames are annotated with MediaPipe landmark connection lines.
-* **Payload Type**: Binary (`blob` / JPEG bytes) sent at 30 FPS.
+### WebSocket Streams
+- `WS /trainer/stream`: Streams annotated camera JPEG frames and real-time finger state metadata at 30 FPS.
+- `WS /voice/stream`: Streams real-time voice status events, live transcriptions, and executed command logs.
 
 ---
 
 ## Configuration Schema
 
-DEXTRA stores configurations in two JSON files located at the root of the workspace.
-
-### dextra_settings.json
-Manages system thresholds, smoothing buffers, and hardware configurations:
-
+### `dextra_settings.json`
 ```json
 {
   "camera_index": 0,
@@ -431,79 +317,48 @@ Manages system thresholds, smoothing buffers, and hardware configurations:
 }
 ```
 
-### dextra_custom_gestures.json
-Stores mapped configurations for custom gestures trained by the user:
+---
 
-```json
-[
-  {
-    "gesture_name": "ThreeFingerPinch",
-    "finger_states": [1, 1, 1, 0, 0],
-    "mapped_action": "win+d",
-    "trained_landmarks_matrix": [
-      [0.45, 0.67, -0.02],
-      [0.42, 0.61, -0.05]
-    ]
-  }
-]
-```
+## System Requirements
+
+### Hardware Requirements
+- **Webcam**: Built-in or USB webcam (720p recommended, 480p minimum).
+- **Processor**: Intel Core i5 / AMD Ryzen 5 or equivalent (2.0 GHz+).
+- **RAM**: 4 GB minimum, 8 GB recommended.
+- **Microphone**: Built-in or external mic.
+
+### Software & Environment
+- **Operating System**: Windows 10 / 11 (64-bit), macOS, or Linux.
+- **Python**: Version 3.8, 3.9, or 3.10.
+- **Node.js**: Node 18+ (for building frontend SPA assets).
 
 ---
 
 ## Installation & Deployment
 
-Follow the steps below to configure DEXTRA on your local machine.
+### Quick Start (Automated PowerShell Script)
+```powershell
+.\run_dextra.ps1
+```
 
-### Prerequisites
-* **Python**: Python 3.8, 3.9, or 3.10 installed on your system.
-* **Node.js**: Node 18+ installed (needed for React client builds).
-* **Compiler Build Tools**: C++ build compilers might be required on Windows to build PyAudio.
-
----
-
-### Step-by-Step Installation
-
-#### 1. Clone the Repository
+### Manual Installation Steps
 ```bash
+# 1. Clone repository
 git clone https://github.com/your-org/Dextra.git
 cd Dextra
-```
 
-#### 2. Configure Python Virtual Environment & Install Dependencies
-Create a virtual environment and install the required packages:
-```bash
-# Create a local virtual environment
+# 2. Set up Python virtual environment & dependencies
 python -m venv .venv
-
-# Activate the virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
-
-# Install requirements
+.venv\Scripts\activate      # Windows
 pip install -r requirements.txt
-```
 
-#### 3. Compile the React GUI Application
-Build the React frontend using the Vite CLI:
-```bash
-# Navigate to the frontend directory
-cd gui
-
-# Install Node dependencies
+# 3. Build React Frontend SPA
+cd Frontend
 npm install
-
-# Compile the application build assets
 npm run build
-
-# Return to root directory
 cd ..
-```
 
-#### 4. Launch DEXTRA
-Run the launcher script to start the application:
-```bash
+# 4. Launch DEXTRA Launcher Menu
 python python/main.py
 ```
 
@@ -511,105 +366,59 @@ python python/main.py
 
 ## Verification & Testing
 
-### Python Compilation Validation
-Verify that the Python files are syntactically correct:
-```bash
-python -m py_compile python/config.py python/camera.py python/gesture_engine.py python/gesture_mapping.py python/voice_wakeword.py python/voice_engine.py python/voice_mapping.py python/gui_server.py python/main.py
+### Running Full Automated Test Suites
+
+#### 1. Python Unit & API Test Suite
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
 ```
+*(Runs 24 unit & API endpoint tests covering settings CRUD, gesture heuristics, voice mappings, and REST endpoints).*
 
-### Unit & Integration Test Scopes
-
-#### Salman - Core Gesture Engine (`python/gesture_engine.py`)
-* **Test Case**: MediaPipe Hands initializes on CPU and processes frames at >=30 FPS.
-* **Test Case**: The moving average filter removes high-frequency jitter without introducing noticeable lag.
-* **Test Case**: Pinch gesture distance checks return TRUE when landmark coordinates are close.
-
-#### Logesh - Voice Engine (`python/voice_engine.py`)
-* **Test Case**: The background listening thread starts without blocking main thread tasks.
-* **Test Case**: The wakeword detector identifies "DEXTRA" under low signal-to-noise ratios.
-* **Test Case**: Transcribing audio clips locally using the Whisper model completes in <500ms.
-
-#### Muthamil - API Server (`python/gui_server.py`)
-* **Test Case**: The FastAPI server starts on port 8000.
-* **Test Case**: POST payloads that fall outside limits (e.g. cursor smoothing set to 25) are rejected.
-* **Test Case**: The WebSocket stream handles sudden client disconnections without leaking memory.
-
-#### Godfrey - React Frontend (`gui/`)
-* **Test Case**: The Vite local server runs on port 5173.
-* **Test Case**: Form bindings update states correctly and POST valid payload structures to `/settings`.
-* **Test Case**: The HTML5 Canvas renders JPEG streams at 30 FPS.
+#### 2. JavaScript / Frontend Test Suite
+```powershell
+cd Frontend
+npm test
+```
+*(Runs Vitest / Node test suite validating metadata schemas and API utilities).*
 
 ---
 
-## Security & Compliance
+## Challenges, Mitigations & Future Roadmap
 
-### Local-First Data Processing
-DEXTRA values data privacy. By design, no video frames or audio buffers are sent to external servers or cloud services.
-* **Video Frames**: Webcam frames are read from OpenCV directly into memory buffers, parsed by the local MediaPipe framework, and immediately released. They are not stored on disk.
-* **Audio Buffers**: Microphone signals are captured locally in RAM, checked by the wakeword module, and transcribed. Once processed, the audio buffers are discarded.
+| Challenge / Risk | Mitigation Strategy |
+| :--- | :--- |
+| **Cursor Jitter** | Moving average smoothing buffer (configurable 1–15 frames). |
+| **Accidental Clicks** | Configurable cooldown timer + Euclidean click distance threshold. |
+| **Poor Lighting** | Confidence threshold tuning; recommend adequate front lighting. |
+| **Gorilla Arm Fatigue** | Rest Mode ("Open Palm") gesture suspends active mouse updates. |
+| **Background Noise** | Signal RMS threshold check before triggering Whisper ASR. |
 
-### Offline Security
-DEXTRA is designed to run completely offline. Once dependencies are installed and the Whisper models are cached, all features function without an active internet connection.
-
----
-
-## Performance & Scalability
-
-### Thread Allocation Mappings
-To keep coordinate tracking smooth and voice recognition responsive, DEXTRA allocates tasks to separate CPU threads:
-
-* **Thread 1 (Main Thread)**: Handles the GUI launcher console and coordinate mapping tasks.
-* **Thread 2 (FastAPI Daemon)**: Hosts the Uvicorn web server and manages REST and WebSocket traffic.
-* **Thread 3 (Webcam Ingestion Loop)**: OpenCV captures frames, passes them to MediaPipe, and streams overlays.
-* **Thread 4 (Audio Capture)**: Ingests raw microphone inputs into shared buffers.
-* **Thread 5 (ASR Transcriber)**: Runs the Hugging Face model pipeline for speech-to-text when triggered.
-
-### Latency Profiles
-* **Landmark Tracking**: MediaPipe hand detection runs in 15-25ms on average consumer CPUs.
-* **Coordinate Smoothing**: NumPy moving average filters process in under 1ms.
-* **Voice Wakeword Detection**: Wakeword checks take 5-10ms per block.
-* **Hugging Face Transcription (Whisper-tiny)**: Audio processing takes 250-400ms on typical CPU hardware.
+### Future Enhancements
+- **Kalman Filter Smoothing**: Superior jitter reduction over moving average.
+- **System Tray Icon**: Silent background task control via `pystray`.
+- **Multi-hand Support**: Two-hand gestures for spatial 3D rotate and multi-monitor movement.
+- **Standalone Portable Installer**: Package into single-click executable via PyInstaller.
 
 ---
 
-## Troubleshooting & FAQ
+## Development Roadmap (14-Day Timeline)
 
-### Troubleshooting Guidance
-
-#### 1. OpenCV Cannot Bind to Webcam Index
-* **Issue**: The log shows `ERROR: Webcam index 0 could not be opened`.
-* **Solution**: Check if another application (like Zoom, Teams, or the camera app) is using the webcam. If you have an external camera connected, change the `camera_index` value in `dextra_settings.json` to `1` or `2`.
-
-#### 2. High CPU Latency During Gesture Tracking
-* **Issue**: Cursor updates lag behind hand movements.
-* **Solution**: Reduce the target capture resolution in `python/camera.py` to `640x480`. You can also lower the `cursor_smoothing` value in `dextra_settings.json` to reduce buffer size.
-
-#### 3. Hugging Face ASR Download Failures
-* **Issue**: The system freezes on startup when loading the Whisper model.
-* **Solution**: On the first launch, the ASR engine needs an active internet connection to download model weights from Hugging Face. Ensure your connection is stable. Once downloaded, the model will run completely offline.
-
----
-
-### FAQ
-
-#### Q: Can I run DEXTRA without a dedicated GPU?
-**A**: Yes. The hand landmark tracker (MediaPipe) and voice transcriber (Whisper-tiny) are optimized to run efficiently on standard consumer CPU processors.
-
-#### Q: How can I customize the wakeword?
-**A**: You can configure your preferred wakeword (e.g. "DEXTRA") in the `VoiceController.jsx` dashboard component or update the voice settings in `dextra_settings.json`.
-
-#### Q: Are hand images or audio command clips stored on my computer?
-**A**: No. All video frames and audio inputs are processed in-memory and discarded immediately after action execution.
+- **Days 1–2 (Foundation)**: Webcam frame capture, MediaPipe integration, config manager base.
+- **Days 3–5 (Core Gestures)**: Cursor smoothing, click/double-click/drag detection, rest mode.
+- **Days 6–8 (Voice Engine)**: Audio stream sounddevice capture, wakeword detector, Hugging Face Whisper ASR.
+- **Days 9–10 (GUI & Trainer)**: FastAPI REST endpoints, React SPA settings forms, WebSocket stream renderer.
+- **Days 11–12 (Integration & Polish)**: Concurrent multi-threading sync, glassmorphism UI refinement.
+- **Days 13–14 (Testing & Release)**: Test suite creation, latency profiling, documentation packaging.
 
 ---
 
 ## Contributors & Licensing
 
 ### Project Contributors
-* **Salman** (Core Gesture & Tracking Engine)
-* **Logesh** (Voice Command Engine)
-* **Muthamil** (FastAPI Backend & Launch Systems)
-* **Godfrey** (React Settings & Trainer SPA)
+- **Salman** — Core Gesture & Tracking Engine
+- **Logesh** — Voice Command Engine
+- **Muthamil** — FastAPI Backend & Launch Systems
+- **Godfrey** — React Settings & Trainer SPA
 
-### Licensing Information
-DEXTRA is open-source software licensed under the terms of the [MIT License](file:///g:/Dextra/LICENSE). Feel free to use, modify, and distribute the codebase.
+### License
+DEXTRA is open-source software released under the terms of the [MIT License](file:///o:/PROJECTS/Dextra/LICENSE).
