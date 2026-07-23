@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DEXTRA — Control Without Contact | Multi-Morphism Interactive Showcase</title>
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./dextra_social_preview.png">
+  <link rel="apple-touch-icon" href="./dextra_social_preview.png">
+
   <!-- Google Fonts: Outfit & Space Grotesk -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -923,28 +927,32 @@
   <section id="hero" class="hero-section">
     <div class="container">
       <div class="hero-badge-wrap">
-        <span class="badge-clay badge-green"><span class="badge-dot"></span> System Operational</span>
+        <span class="badge-clay" style="background: linear-gradient(135deg, #4a8ec6, #2563eb); color: white; border: 1px solid rgba(255,255,255,0.8); font-size: 0.88rem; padding: 9px 22px; box-shadow: 0 8px 24px rgba(37,99,235,0.35);">
+          <i class="fa-solid fa-globe"></i> Interactive Web View for DEXTRA System
+        </span>
+        <span class="badge-clay badge-green"><span class="badge-dot"></span> System Showcase Active</span>
         <span class="badge-clay badge-blue"><i class="fa-brands fa-python"></i> Python 3.10</span>
         <span class="badge-clay badge-blue"><i class="fa-brands fa-react"></i> React 18</span>
         <span class="badge-clay badge-orange"><i class="fa-solid fa-bolt"></i> MediaPipe 0.10</span>
-        <span class="badge-clay badge-blue"><i class="fa-solid fa-microphone"></i> Whisper STT</span>
       </div>
 
       <h1 class="hero-title">
         <span>Control Without Contact</span><br>Touchless Computing Reimagined
       </h1>
 
-      <p class="hero-subtitle">
-        DEXTRA turns any standard webcam and microphone into an intelligent spatial input controller. Harnessing
-        MediaPipe 21 hand landmarks, EMA pointer smoothing, and local Whisper speech recognition for zero-hardware mouse
-        replacement.
-      </p>
+      <div style="max-width: 840px; margin: 0 auto 28px; padding: 18px 24px; background: rgba(255, 255, 255, 0.75); border-radius: var(--radius-md); box-shadow: var(--neu-outset); border: var(--glass-border);">
+        <p style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
+          <i class="fa-solid fa-circle-info" style="color: var(--accent-deep);"></i> Interactive Web Showcase Notice
+        </p>
+        <p style="font-size: 0.92rem; color: var(--text-secondary);">
+          This page is an <strong>interactive website showcasing the entire DEXTRA system architecture, 21-landmark poses, and voice command engine</strong> — it is a web-based presentation view, not the desktop backend production daemon.
+        </p>
+      </div>
 
-      <div style="display: flex; gap: 18px; justify-content: center;">
-        <a href="#visualizer" class="btn-clay btn-clay-primary"><i class="fa-solid fa-play"></i> Launch Pose
-          Simulator</a>
-        <a href="#gestures" class="btn-clay btn-clay-secondary"><i class="fa-solid fa-book-open"></i> Explore 22
-          Gestures</a>
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="https://github.com/TheOrionGD/Dextra" target="_blank" class="btn-clay btn-clay-primary"><i class="fa-brands fa-github"></i> GitHub Repository</a>
+        <a href="#visualizer" class="btn-clay btn-clay-secondary"><i class="fa-solid fa-play"></i> Pose Simulator</a>
+        <a href="#gestures" class="btn-clay btn-clay-secondary"><i class="fa-solid fa-book-open"></i> 22 Gestures</a>
       </div>
 
       <!-- Clay 3D KPI Grid -->
@@ -1396,10 +1404,14 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <p style="font-weight: 700; font-size: 1.1rem; color: var(--text-primary);">DEXTRA — Control Without Contact</p>
-      <p style="font-size: 0.88rem; margin-top: 8px;">
-        Released under the MIT License · Built with MediaPipe, OpenCV, PyAutoGUI, FastAPI, React &amp; Hugging Face
-        Whisper.
+      <p style="font-weight: 700; font-size: 1.15rem; color: var(--text-primary);">DEXTRA — Control Without Contact (Interactive System Web View)</p>
+      <p style="font-size: 0.9rem; margin-top: 8px; color: var(--text-secondary);">
+        Interactive Web Showcase for DEXTRA System (Not the production desktop executable) · Released under the MIT License
+      </p>
+      <p style="margin-top: 14px;">
+        <a href="https://github.com/TheOrionGD/Dextra" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent-deep); text-decoration: none; background: rgba(255, 255, 255, 0.9); padding: 8px 20px; border-radius: var(--radius-full); box-shadow: var(--neu-outset); border: var(--glass-border);">
+          <i class="fa-brands fa-github" style="font-size: 1.2rem;"></i> GitHub Repository: github.com/TheOrionGD/Dextra
+        </a>
       </p>
     </div>
   </footer>
